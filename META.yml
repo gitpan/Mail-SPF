@@ -1,0 +1,15 @@
+# http://module-build.sourceforge.net/META-spec.html
+#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
+name:         Mail-SPF
+version:      2.00
+version_from: lib/Mail/SPF.pm
+installdirs:  site
+requires:
+    Carp:                          0
+    Exporter:                      0
+    Getopt::Long:                  2.3
+    Net::DNS:                      0
+    Test::More:                    0.4
+
+distribution_type: module
+generated_by: ExtUtils::MakeMaker version 6.20
