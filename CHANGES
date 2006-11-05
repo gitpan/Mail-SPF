@@ -1,0 +1,21 @@
+# Legend:
+# --- = A new release
+#   + = Added a feature (in a backwards compatible way)
+#   ! = Changed something significant, or removed a feature
+#   * = Fixed a bug, or made a minor improvement
+
+--- 2.000_001 (2006-11-04 23:45)
+
+  > 2.001 pre-release.
+  > Major overhaul:
+    ! Major code refactoring.
+    ! Switched from EU::MM to Module::Build.
+    + Added Debian package control files.
+    + Added complete documentation.
+    + Added unit tests.
+    + And more...
+
+--- 2.000 (initial release) (2005-06-23 00:00)
+
+# $Id: CHANGES 18 2006-11-04 23:54:07Z Julian Mehnle $
+# vim:tw=79 sts=2 sw=2

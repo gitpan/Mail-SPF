@@ -1,71 +1,167 @@
+#
+# Mail::SPF::Mech::PTR
+# SPF record "ptr" mechanism class.
+#
+# (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
+#     2005      Shevek <cpan@anarres.org>
+# $Id: PTR.pm 14 2006-11-04 15:30:34Z Julian Mehnle $
+#
+##############################################################################
+
 package Mail::SPF::Mech::PTR;
 
-use strict;
+=head1 NAME
+
+Mail::SPF::Mech::PTR - SPF record C<ptr> mechanism class
+
+=cut
+
 use warnings;
+use strict;
+
 use base 'Mail::SPF::Mech';
 
-use Net::IP;
+use Mail::SPF::Util;
 
-sub new {
-	my $class = shift;
-	my $self = $class->SUPER::new(@_);
-	my $response = delete $self->{Response};
-	$self->parse_domain_spec($response, 0);
-	$self->parse_end($response);
-	return $self;
+use NetAddr::IP;
+
+use constant TRUE   => (0 == 0);
+use constant FALSE  => not TRUE;
+
+use constant name           => 'ptr';
+use constant name_pattern   => qr/${\name}/;
+
+=head1 DESCRIPTION
+
+An object of class B<Mail::SPF::Mech::PTR> represents an SPF record mechanism
+of type C<ptr>.
+
+=head2 Constructors
+
+The following constructors are provided:
+
+=over
+
+=item B<new(%options)>: returns I<Mail::SPF::Mech::PTR>
+
+Creates a new SPF record C<ptr> mechanism object.
+
+%options is a list of key/value pairs representing any of the following
+options:
+
+=over
+
+=item B<qualifier>
+
+=item B<domain_spec>
+
+See L<Mail::SPF::Mech/new>.
+
+=back
+
+=item B<new_from_string($text)>: returns I<Mail::SPF::Mech::PTR>;
+throws I<Mail::SPF::ENothingToParse>, I<Mail::SPF::EInvalidMech>
+
+Creates a new SPF record C<ptr> mechanism object by parsing the given string.
+
+=back
+
+=head2 Class methods
+
+The following class methods are provided:
+
+=over
+
+=item B<default_qualifier>
+
+=item B<qualifier_pattern>
+
+See L<Mail::SPF::Mech/Class methods>.
+
+=item B<name>: returns I<string>
+
+Returns B<'ptr'>.
+
+=item B<name_pattern>: returns I<Regexp>
+
+Returns a regular expression that matches a mechanism name of B<'ptr'>.
+
+=back
+
+=head2 Instance methods
+
+The following instance methods are provided:
+
+=over
+
+=cut
+
+sub parse_params {
+    my ($self) = @_;
+    $self->parse_domain_spec();
+    return;
 }
 
-sub interp {
-	my ($self, $record, $request, $response) = @_;
+=item B<text>
 
-	my $domain = $self->get_domain_spec($request, $response);
-	return 1 unless $domain;
+=item B<qualifier>
 
-	my ($ip, $type);
-	if (defined $request->{IPv4}) {
-		$ip = $request->{IPv4};
-		$type = 'A';
-	}
-	elsif (defined $request->{IPv6}) {
-		$ip = $request->{IPv6};
-		$type = 'AAAA';
-	}
-	else {
-		die "No IP address available in request for PTR.";
-	}
-	my $ptrdomain = $ip->reverse_ip;
-	my $packet = $record->{Server}->get_dns($ptrdomain, 'PTR');
-	return undef unless $packet;
+=item B<params>
 
-	foreach my $rr ($packet->answer) {
-		if ($rr->type eq 'PTR') {
-			my $name = $rr->ptrdname;
-			my $subpacket = $record->{Server}->get_dns($name, $type);
-			next unless $subpacket;
-			foreach my $subrr ($subpacket->answer) {
-				if ($rr->type eq $type) {
-					my $subip = new Net::IP($rr->address);
-					if ($subip->overlaps($ip) != $IP_NO_OVERLAP) {
-						if (($name eq $domain) ||
-							($name =~ /\.\Q$domain\E$/)) {
-							$self->match($request, $response);
-							return 1;
-						}
-					}
-				}
-				elsif ($rr->type =~ /^(CNAME|A|AAAA)$/) {
-				}
-				else {
-					warn "PTR/$type: Unexpected RR type " . $rr->type;
-				}
-			}
-		}
-		else {
-			warn "PTR: Unexpected RR type " . $rr->type;
-		}
-	}
+=cut
 
-	return undef;
+sub params {
+    my ($self) = @_;
+    return $self->{domain_spec};
 }
 
-1;
+=item B<stringify>
+
+See L<Mail::SPF::Mech/Instance methods>.
+
+=item B<domain_spec>: returns I<Mail::SPF::MacroString>
+
+Returns the C<domain-spec> parameter of the mechanism.
+
+=cut
+
+# Make read-only accessor:
+__PACKAGE__->make_accessor('domain_spec', TRUE);
+
+=item B<match($server, $request)>: returns I<boolean>
+
+Checks whether the mechanism's target domain name, or a sub-domain thereof, is
+a "valid" domain name for the given request's IP address (see
+L<Mail::SPF::Request/ip_address>), and returns B<true> if it does, or B<false>
+otherwise.  See L<Mail::SPF::Util/valid_domain_for_ip_address> for how domains
+are validated.  See RFC 4408, 5.5, for the description of an equivalent
+algorithm.
+
+=cut
+
+sub match {
+    my ($self, $server, $request) = @_;
+    return
+        Mail::SPF::Util->valid_domain_for_ip_address(
+            $server, $request->ip_address, $self->domain($server, $request))
+        ? TRUE : FALSE;
+}
+
+=back
+
+=head1 SEE ALSO
+
+L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>, L<Mail::SPF::Mech>
+
+L<http://www.ietf.org/rfc/rfc4408.txt|"RFC 4408">
+
+For availability, support, and license information, see the README file
+included with Mail::SPF.
+
+=head1 AUTHORS
+
+Julian Mehnle <julian@mehnle.net>, Shevek <cpan@anarres.org>
+
+=cut
+
+TRUE;

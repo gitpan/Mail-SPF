@@ -1,0 +1,13 @@
+libmail-spf-perl (2.000+001) UNRELEASED; urgency=low
+
+  > 2.001 pre-release.
+  > Major overhaul:
+    ! Major code refactoring.
+    ! Switched from EU::MM to Module::Build.
+    + Added Debian package control files.
+    + Added complete documentation.
+    + Added unit tests.
+    + And more...
+
+ -- Julian Mehnle <julian@mehnle.net>  Sat,  4 Nov 2006 23:45:00 +0000
+

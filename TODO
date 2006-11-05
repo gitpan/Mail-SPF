@@ -1,0 +1,74 @@
+# Legend:
+# --- = A new release
+#   + = Add a feature (in a backwards compatible way)
+#   ! = Change something significant, or remove a feature
+#   * = Fix a bug, or make a minor improvement
+
+--- 2.000_001
+
+  ! [DONE] Implement qualifiers somehow -- probably not as a property of
+    mechanisms.
+  * [DONE] Finish Mail::SPF::Mech::ip_address_in_domain().
+  * [DONE] Implement Mail::SPF::Util::ip_address_reverse().
+  ! [DONE] Clean up Mail::SPF::Mech::*::match() methods (use Mail::SPF::Mech::A
+    as model).
+  ! [DONE] Clean up Mail::SPF::Record, Mail::SPF::Record::v1, Mail::SPF::Record::v2_0.
+  ! [DONE] Finish Mail::SPF::Server::query() (including documentation).
+  * [DONE] Mail::SPF::Request:
+    - [DONE] Add auxiliary HELO identity support for %{h} macro expansion
+    - [DONE] Add "policy_domain" field, default to value of "domain" field
+    - [DONE] Store IP address as "ip_address" (for display) and "ip_address_v6"
+      (for computation) fields
+  * [DONE] Implement Mail::SPF::Util::valid_domain_for_ip_address().  Move code
+    from Mail::SPF::Mech::PTR::match().
+  ! [DONE] Finish Mail::SPF::MacroString:
+    - [DONE] %{p} macro
+    - [DONE] Upper-case macros
+  ! [DONE] Modify SPF-result-throwing idiom so that the $request is passed to
+    Mail::SPF::Result::throw() as a context, which is then translated to, and
+    stored as, result meta-data by throw().
+  * [DONE] Fix the global modifier preprocess() mess?  Special-case the exp= modifier
+    in Mail::SPF::Record::eval() or Mail::SPF::Server?  Review Mail::SPF::Mod::Exp::
+    preprocess().
+  * [DONE] Pass $server as the first argument to Mail::SPF::Mech::domain() from
+    everywhere.
+  * [DONE] Pass $server _instead_ of $record as the first argument to Mail::SPF::Mech::
+    match{,_in_domain}() (and other methods) from everywhere?
+  * [DONE] Fix calls to Mail::SPF::MacroString::{context,expand,stringify}() everywhere.
+
+  * Mail::SPF::Server::dns_lookup(): Follow CNAMEs transparently.
+  ! Resolve remaining XXXs, FIXMEs, and TODOs:
+    grep -rn 'XXX\|TODO\|FIXME' lib | grep -v '\.svn' | less
+
+  ! Tests:
+    + Mail::SPF
+    + Mail::SPF::Base
+    + Mail::SPF::Exception
+    
+    + Mail::SPF::Util
+    + Mail::SPF::Request
+    + Mail::SPF::Result
+    + Mail::SPF::Server
+    + Mail::SPF::MacroString
+    
+    + Mail::SPF::Term
+    + Mail::SPF::Mech
+    + Mail::SPF::Mech::All
+    + Mail::SPF::Mech::IP4
+    + Mail::SPF::Mech::IP6
+    + Mail::SPF::Mech::A
+    + Mail::SPF::Mech::MX
+    + Mail::SPF::Mech::PTR
+    + Mail::SPF::Mech::Exists
+    + Mail::SPF::Mech::Include
+    + Mail::SPF::Mod
+    + Mail::SPF::Mod::Exp
+    + Mail::SPF::Mod::Redirect
+    + Mail::SPF::Record
+    + Mail::SPF::Record::v1
+    + Mail::SPF::Record::v2_0
+
+  * Please DO report documentation bugs, as there certainly are some!
+
+# $Id: TODO 15 2006-11-04 15:39:26Z Julian Mehnle $
+# vim:tw=79

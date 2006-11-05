@@ -1,0 +1,14 @@
+Source: libmail-spf-perl
+Section: perl
+Priority: optional
+Maintainer: Julian Mehnle <julian@mehnle.net>
+Build-Depends: debhelper (>= 5)
+Build-Depends-Indep: perl (>= 5.6), libmodule-build-perl (>= 0.26), liberror-perl, libnetaddr-ip-perl (>= 4), libnet-dns-perl (>= 0.58), libnet-dns-resolver-programmable-perl, liburi-perl (>= 1.13)
+Standards-Version: 3.7.2
+
+Package: libmail-spf-perl
+Architecture: all
+Depends: perl (>= 5.6), liberror-perl, libnetaddr-ip-perl (>= 4), libnet-dns-perl (>= 0.58), libnet-dns-resolver-programmable-perl, liburi-perl (>= 1.13), ${misc:Depends}
+Description: Perl implementation of Sender Policy Framework
+ Mail::SPF is an object-oriented Perl implementation of Sender Policy Framework
+ (SPF) <http://www.openspf.org>.

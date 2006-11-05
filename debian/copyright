@@ -1,0 +1,11 @@
+This is the Debian package for Mail::SPF, which is available from
+<http://search.cpan.org/dist/Mail-SPF>.
+
+(C) 2005-2006 Julian Mehnle <julian@mehnle.net>
+    2005      Shevek <cpan@anarres.org>
+
+Julian Mehnle is the maintainer of the Debian package.
+
+This is free software; you may use, modify, and distribute it under the terms
+of the BSD license.  On Debian systems, the complete text of the BSD license
+can be found here: /usr/share/common-licenses/BSD
