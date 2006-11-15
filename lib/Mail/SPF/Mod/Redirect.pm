@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Redirect.pm 14 2006-11-04 15:30:34Z Julian Mehnle $
+# $Id: Redirect.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -26,7 +26,7 @@ use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;
 
 use constant name           => 'redirect';
-use constant name_pattern   => qr/${\name}/;
+use constant name_pattern   => qr/${\name}/i;
 
 =head1 DESCRIPTION
 
@@ -127,15 +127,18 @@ details.
 sub process {
     my ($self, $server, $request, $result) = @_;
     
+    $server->count_dns_interactive_term($request);
+    
     # Only perform redirection if no mechanism matched (RFC 4408, 6.1/1):
     $result->isa('Mail::SPF::Result::NeutralByDefault')
         or return;
     
-    # Clone request with mutated authority domain:
-    my $authority_domain = $self->domain($server, $request);
-    my $subrequest = $request->new(authority_domain => $authority_domain);
-    # Perform sub-request:
-    $result = $server->process($subrequest);
+    # Create sub-request with mutated authority domain:
+    my $authority_domain = $self->{domain_spec}->new(server => $server, request => $request);
+    my $sub_request = $request->new_sub_request(authority_domain => $authority_domain);
+    
+    # Process sub-request:
+    $result = $server->process($sub_request);
     
     # Translate result of sub-request (RFC 4408, 6.1/4):
     throw Mail::SPF::Result::PermError($request,
@@ -143,6 +146,8 @@ sub process {
         if $result->isa('Mail::SPF::Result::None');
     
     # Propagate any other results as-is:
+    $request->state('explanation') = $sub_request->state('explanation');
+        # Propagate result explanation from sub-request.
     $result->throw($request);
 }
 
@@ -154,7 +159,7 @@ See L<Mail::SPF::Mod> for other supported instance methods.
 
 L<Mail::SPF>, L<Mail::SPF::Mod>, L<Mail::SPF::Term>, L<Mail::SPF::Record>
 
-L<http://www.ietf.org/rfc/rfc4408.txt|"RFC 4408">
+L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

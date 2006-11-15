@@ -7,14 +7,17 @@ The following Perl version and packages are required for...
 
   Perl 5.6
   Module-Build 0.26
-  Test::More
+  Test-More
+  Net-DNS-Resolver-Programmable 0.002
 
 ...running Mail::SPF:
 
   Perl 5.6
-#  Error
-  Net-IP
-  Getopt-Long
+  version
+  Error
+  NetAddr-IP 4
+  Net-DNS 0.58
+  URI 1.13
 
 Building and Installing
 -----------------------

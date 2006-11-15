@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: MX.pm 14 2006-11-04 15:30:34Z Julian Mehnle $
+# $Id: MX.pm 25 2006-11-15 15:58:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -25,7 +25,7 @@ use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;
 
 use constant name           => 'mx';
-use constant name_pattern   => qr/${\name}/;
+use constant name_pattern   => qr/${\name}/i;
 
 =head1 DESCRIPTION
 
@@ -117,7 +117,9 @@ sub parse_params {
 
 sub params {
     my ($self) = @_;
-    my $params = $self->{domain_spec};
+    my $params;
+    $params .= ':' . $self->{domain_spec}
+        if  defined($self->{domain_spec});
     $params .= '/' . $self->{ipv4_prefix_length}
         if  defined($self->{ipv4_prefix_length})
         and $self->{ipv4_prefix_length} != $self->default_ipv4_prefix_length;
@@ -166,15 +168,18 @@ when matching address records against the request's IP address.  See RFC 4408,
 
 sub match {
     my ($self, $server, $request) = @_;
+    
+    $server->count_dns_interactive_term($request);
+    
     my $target_domain = $self->domain($server, $request);
     my $mx_packet     = $server->dns_lookup($target_domain, 'MX');
     my @mx_rrs        = $mx_packet->answer;
-
+    
     # Respect the MX mechanism lookups limit (RFC 4408, 5.4/3/4):
     @mx_rrs = splice(@mx_rrs, 0, $server->max_name_lookups_per_mx_mech)
         if defined($server->max_name_lookups_per_mx_mech);
     
-    # TODO Use A records from packet's "additional" section?
+    # TODO Use A records from packet's "additional" section? Probably not.
     
     # Check MX records:
     foreach my $rr (@mx_rrs) {
@@ -184,7 +189,7 @@ sub match {
         }
         else {
             # TODO Generate debug info or ignore silently!
-            warn('MX: Unexpected RR type ' . $rr->type);
+            #warn('MX: Unexpected RR type ' . $rr->type);
         }
     }
     
@@ -197,7 +202,7 @@ sub match {
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>, L<Mail::SPF::Mech>
 
-L<http://www.ietf.org/rfc/rfc4408.txt|"RFC 4408">
+L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

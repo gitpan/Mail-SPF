@@ -3,7 +3,7 @@
 # Mail::SPF exception classes.
 #
 # (C) 2006 Julian Mehnle <julian@mehnle.net>
-# $Id: Exception.pm 16 2006-11-04 23:39:16Z Julian Mehnle $
+# $Id: Exception.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -12,7 +12,7 @@ package Mail::SPF::Exception;
 use warnings;
 use strict;
 
-use base 'Error';
+use base 'Error', 'Mail::SPF::Base';
 
 use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;
@@ -20,7 +20,6 @@ use constant FALSE  => not TRUE;
 sub new {
     my ($self, $text) = @_;
     local $Error::Depth = $Error::Depth + 1;
-    #XXX $text = $self if not defined($text);
     return $self->SUPER::new(
         defined($text) ? (-text => $text) : ()
     );
@@ -29,9 +28,15 @@ sub new {
 sub stringify {
     my ($self) = @_;
     my $text = $self->SUPER::stringify;
-    $text .= sprintf(" (%s) at %s line %d.\n", ref($self), $self->file, $self->line)
+    $text .= sprintf(" (%s) at %s line %d.\n", $self->name, $self->file, $self->line)
         if $text !~ /\n$/s;
     return $text;
+}
+
+sub name {
+    my ($self) = @_;
+    my $class = ref($self) || $self;
+    return $class =~ /^Mail::SPF::(\w+)$/ ? $1 : $class;
 }
 
 
@@ -88,10 +93,6 @@ our @ISA = qw(Mail::SPF::Exception);
 # Miscellaneous Errors
 ##############################################################################
 
-# Invalid scope:
-package Mail::SPF::EInvalidScope;
-our @ISA = qw(Mail::SPF::Exception);
-
 # DNS error:
 package Mail::SPF::EDNSError;
 our @ISA = qw(Mail::SPF::Exception);
@@ -112,6 +113,10 @@ our @ISA = qw(Mail::SPF::Exception);
 package Mail::SPF::EUnexpectedTermObject;
 our @ISA = qw(Mail::SPF::Exception);
 
+# Processing limit exceeded:
+package Mail::SPF::EProcessingLimitExceeded;
+our @ISA = qw(Mail::SPF::Exception);
+
 # Missing required context for macro expansion:
 package Mail::SPF::EMacroExpansionCtxRequired;
 our @ISA = qw(Mail::SPF::EOptionRequired);
@@ -130,6 +135,10 @@ our @ISA = qw(Mail::SPF::Exception);
 
 # Invalid record version:
 package Mail::SPF::EInvalidRecordVersion;
+our @ISA = qw(Mail::SPF::ESyntaxError);
+
+# Invalid scope:
+package Mail::SPF::EInvalidScope;
 our @ISA = qw(Mail::SPF::ESyntaxError);
 
 # Junk encountered in record:
@@ -179,6 +188,14 @@ our @ISA = qw(Mail::SPF::ESyntaxError);
 # Missing required <ip6-cidr-length> in term:
 package Mail::SPF::ETermIPv6PrefixLengthExpected;
 our @ISA = qw(Mail::SPF::ESyntaxError);
+
+# Invalid macro string:
+package Mail::SPF::EInvalidMacroString;
+our @ISA = qw(Mail::SPF::ESyntaxError);
+
+# Invalid macro:
+package Mail::SPF::EInvalidMacro;
+our @ISA = qw(Mail::SPF::EInvalidMacroString);
 
 
 package Mail::SPF::Exception;

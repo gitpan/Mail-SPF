@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Record.pm 16 2006-11-04 23:39:16Z Julian Mehnle $
+# $Id: Record.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -22,7 +22,8 @@ use strict;
 use base 'Mail::SPF::Base';
 
 use overload
-    '""' => 'stringify';
+    '""'        => 'stringify',
+    fallback    => 1;
 
 use Error ':try';
 
@@ -125,6 +126,8 @@ sub new {
         or throw Mail::SPF::EAbstractClass;
     $self = $self->SUPER::new(%options);
     $self->{parse_text} = $self->{text} if not defined($self->{parse_text});
+    $self->{terms}       ||= [];
+    $self->{global_mods} ||= {};
     return $self;
 }
 
@@ -389,7 +392,7 @@ sub eval {
                 if ($mech->match($server, $request)) {
                     my $result_code  = $self->results_by_qualifier->{$mech->qualifier};
                     my $result_class = Mail::SPF::Result->class_by_code($result_code);
-                    throw $result_class($request, "Term '$term' matched");
+                    throw $result_class($request, "Mechanism '$term' matched");
                 }
             }
             elsif ($term->isa('Mail::SPF::PositionalMod')) {
@@ -416,6 +419,8 @@ sub eval {
         
         # Process global modifiers:
         foreach my $global_mod ($self->global_mods) {
+            # FIXME Possibly exempt "redirect" modifier and perform last?
+            # FIXME Or, a "priority" property could be introduced for global modifiers.
             $global_mod->process($server, $request, $result)
             #    if $global_mod->can('process');
         }
@@ -436,7 +441,7 @@ is used to convert the object into a string.
 L<Mail::SPF>, L<Mail::SPF::v1::Record>, L<Mail::SPF::v2::Record>,
 L<Mail::SPF::Term>, L<Mail::SPF::Mech>, L<Mail::SPF::Mod>
 
-L<http://www.ietf.org/rfc/rfc4408.txt|"RFC 4408">
+L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

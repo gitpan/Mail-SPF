@@ -35,10 +35,19 @@
   * [DONE] Pass $server _instead_ of $record as the first argument to Mail::SPF::Mech::
     match{,_in_domain}() (and other methods) from everywhere?
   * [DONE] Fix calls to Mail::SPF::MacroString::{context,expand,stringify}() everywhere.
+  * [DONE] Mail::SPF::Server::dns_lookup(): Follow CNAMEs transparently.
+  * [DONE] Increase version number.
 
-  * Mail::SPF::Server::dns_lookup(): Follow CNAMEs transparently.
   ! Resolve remaining XXXs, FIXMEs, and TODOs:
     grep -rn 'XXX\|TODO\|FIXME' lib | grep -v '\.svn' | less
+  * Fix rt.cpan.org bugs.
+  * Ensure that "redirect=" always gets processed after any "exp=".
+  * Verify that "exp=" from included records is never used!
+  * [DONE?] Fix the RFC 4408 POD references.
+  * Remove or conditionalize debug output generation.
+
+  * Remove CNAME support.
+  * Update changelogs.
 
   ! Tests:
     + Mail::SPF
@@ -51,24 +60,24 @@
     + Mail::SPF::Server
     + Mail::SPF::MacroString
     
-    + Mail::SPF::Term
-    + Mail::SPF::Mech
-    + Mail::SPF::Mech::All
-    + Mail::SPF::Mech::IP4
-    + Mail::SPF::Mech::IP6
-    + Mail::SPF::Mech::A
-    + Mail::SPF::Mech::MX
-    + Mail::SPF::Mech::PTR
-    + Mail::SPF::Mech::Exists
-    + Mail::SPF::Mech::Include
-    + Mail::SPF::Mod
-    + Mail::SPF::Mod::Exp
-    + Mail::SPF::Mod::Redirect
-    + Mail::SPF::Record
-    + Mail::SPF::Record::v1
-    + Mail::SPF::Record::v2_0
+    ~ Mail::SPF::Term
+    ~ Mail::SPF::Mech
+    ~ Mail::SPF::Mech::All
+    ~ Mail::SPF::Mech::IP4
+    ~ Mail::SPF::Mech::IP6
+    ~ Mail::SPF::Mech::A
+    ~ Mail::SPF::Mech::MX
+    ~ Mail::SPF::Mech::PTR
+    ~ Mail::SPF::Mech::Exists
+    ~ Mail::SPF::Mech::Include
+    ~ Mail::SPF::Mod
+    ~ Mail::SPF::Mod::Exp
+    ~ Mail::SPF::Mod::Redirect
+    ~ Mail::SPF::Record
+    ~ Mail::SPF::v1::Record
+    ~ Mail::SPF::v2::Record
 
   * Please DO report documentation bugs, as there certainly are some!
 
-# $Id: TODO 15 2006-11-04 15:39:26Z Julian Mehnle $
+# $Id: TODO 22 2006-11-15 03:31:28Z Julian Mehnle $
 # vim:tw=79

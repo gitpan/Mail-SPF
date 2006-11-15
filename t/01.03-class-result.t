@@ -4,7 +4,7 @@ use blib;
 
 use Error ':try';
 
-use Test::More tests => 18;
+use Test::More tests => 16;
 
 use Mail::SPF::Request;
 
@@ -74,21 +74,6 @@ BEGIN { use_ok('Mail::SPF::Result') }
     my $result = Mail::SPF::Result::Pass->new('dummy request');
     ok($result->is_code('PaSs'),                        'Result is_code($valid_code)');
     ok((not $result->is_code('foo')),                   'Result is_code($invalid_code)');
-}
-
-
-#### Fail, code() ####
-
-{
-    my $request = Mail::SPF::Request->new(
-        identity    => 'fred@example.com',
-        ip_address  => '192.168.0.1'
-    );
-    $request->state('explanation', 'dummy explanation');
-
-    my $result = Mail::SPF::Result::Fail->new($request);
-    is($result->code,               'fail',             'Result code()');
-    is($result->explanation,       'dummy explanation', 'Fail result explanation()');
 }
 
 

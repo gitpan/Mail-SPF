@@ -1,6 +1,6 @@
 ---
 name: Mail-SPF
-version: 2.000_001
+version: 2.000_002
 author:
   - 'Julian Mehnle <julian@mehnle.net>'
   - 'Shevek <cpan@anarres.org>'
@@ -8,20 +8,19 @@ abstract: An object-oriented implementation of Sender Policy Framework
 license: bsd
 requires:
   Error: 0
-  Getopt::Long: 0
   Net::DNS: 0.58
-  Net::DNS::Resolver::Programmable: 0
-  NetAddr::IP: 4
+  NetAddr::IP: 4.0
   URI: 1.13
   perl: 5.006
   version: 0
 build_requires:
   Module::Build: 0.26
+  Net::DNS::Resolver::Programmable: 0.002001
   Test::More: 0
 provides:
   Mail::SPF:
     file: lib/Mail/SPF.pm
-    version: 2.000_001
+    version: 2.000_002
   Mail::SPF::Base:
     file: lib/Mail/SPF/Base.pm
   Mail::SPF::EAbstractClass:
@@ -35,6 +34,10 @@ provides:
   Mail::SPF::EDuplicateGlobalMod:
     file: lib/Mail/SPF/Exception.pm
   Mail::SPF::EInstanceMethod:
+    file: lib/Mail/SPF/Exception.pm
+  Mail::SPF::EInvalidMacro:
+    file: lib/Mail/SPF/Exception.pm
+  Mail::SPF::EInvalidMacroString:
     file: lib/Mail/SPF/Exception.pm
   Mail::SPF::EInvalidMech:
     file: lib/Mail/SPF/Exception.pm
@@ -63,6 +66,8 @@ provides:
   Mail::SPF::ENothingToParse:
     file: lib/Mail/SPF/Exception.pm
   Mail::SPF::EOptionRequired:
+    file: lib/Mail/SPF/Exception.pm
+  Mail::SPF::EProcessingLimitExceeded:
     file: lib/Mail/SPF/Exception.pm
   Mail::SPF::EReadOnlyValue:
     file: lib/Mail/SPF/Exception.pm

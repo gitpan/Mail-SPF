@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Exists.pm 14 2006-11-04 15:30:34Z Julian Mehnle $
+# $Id: Exists.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -25,7 +25,7 @@ use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;
 
 use constant name           => 'exists';
-use constant name_pattern   => qr/${\name}/;
+use constant name_pattern   => qr/${\name}/i;
 
 =head1 DESCRIPTION
 
@@ -109,7 +109,7 @@ sub parse_params {
 
 sub params {
     my ($self) = @_;
-    return $self->{domain_spec};
+    return defined($self->{domain_spec}) ? ':' . $self->{domain_spec} : undef;
 }
 
 =item B<stringify>
@@ -135,6 +135,7 @@ details.
 
 sub match {
     my ($self, $server, $request) = @_;
+    $server->count_dns_interactive_term($request);
     my $domain = $self->domain($server, $request);
     my $packet = $server->dns_lookup($domain, 'A');
     foreach my $rr ($packet->answer) {
@@ -150,7 +151,7 @@ sub match {
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>, L<Mail::SPF::Mech>
 
-L<http://www.ietf.org/rfc/rfc4408.txt|"RFC 4408">
+L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

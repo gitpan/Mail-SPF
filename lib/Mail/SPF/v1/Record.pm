@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Record.pm 16 2006-11-04 23:39:16Z Julian Mehnle $
+# $Id: Record.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -46,7 +46,7 @@ eval("require $_")
     foreach values(%{mech_classes()}), values(%{mod_classes()});
 
 use constant version_tag            => 'v=spf1';
-use constant version_tag_pattern    => qr/ v=spf(1) (?= \x20 | $ ) /x;
+use constant version_tag_pattern    => qr/ v=spf(1) (?= \x20 | $ ) /ix;
 
 use constant scopes                 => ('helo', 'mfrom');
 
@@ -97,6 +97,8 @@ sub new {
     $self = $self->SUPER::new(%options);
     
     if (defined(my $scopes = $self->{scopes})) {
+        @$scopes > 0
+            or throw Mail::SPF::EInvalidScope('No scopes for v=spf1 record');
         @$scopes == 2 and
         (
             $scopes->[0] eq 'help'  and $scopes->[1] eq 'mfrom' or
@@ -168,7 +170,7 @@ Returns B<'v=spf1'>.
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>, L<Mail::SPF::Mech>,
 L<Mail::SPF::Mod>
 
-L<http://www.ietf.org/rfc/rfc4408.txt|"RFC 4408">
+L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

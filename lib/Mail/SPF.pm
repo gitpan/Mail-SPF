@@ -5,7 +5,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: SPF.pm 16 2006-11-04 23:39:16Z Julian Mehnle $
+# $Id: SPF.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -17,11 +17,11 @@ Mail::SPF - An object-oriented implementation of Sender Policy Framework
 
 =head1 VERSION
 
-2.000_001
+2.000_002
 
 =cut
 
-use version; our $VERSION = qv('2.000_001');
+use version; our $VERSION = qv('2.000_002');
 
 use warnings;
 use strict;
@@ -36,19 +36,18 @@ use constant FALSE  => not TRUE;
 
     use Mail::SPF;
     
-    my $spf     = Mail::SPF::Server->new();
+    my $spf_server  = Mail::SPF::Server->new();
     
-    my $request = Mail::SPF::Request->new(
-        versions    => [1, 2],              # optional
-        scope       => 'mfrom',             # or 'helo', 'pra'
-        identity    => 'fred@example.com',
-        ip_address  => '192.168.0.1',
-        helo_identity                       # optional,
-                    => 'mta.example.com'    #   for %{h} macro expansion
+    my $request     = Mail::SPF::Request->new(
+        versions        => [1, 2],              # optional
+        scope           => 'mfrom',             # or 'helo', 'pra'
+        identity        => 'fred@example.com',
+        ip_address      => '192.168.0.1',
+        helo_identity   => 'mta.example.com'    # optional,
+                                                #   for %{h} macro expansion
     );
     
-    my $result  = $spf->process($request);
-    print("Result is ", $result->name, "\n");
+    my $result      = $spf->process($request);
 
 =head1 DESCRIPTION
 
@@ -77,6 +76,7 @@ L<http://www.openspf.org>
 =item The SPFv1 specification (RFC 4408)
 
 L<http://new.openspf.org/Specifications>
+L<http://www.ietf.org/rfc/rfc4408.txt>
 
 =back
 

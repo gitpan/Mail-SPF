@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Mod.pm 16 2006-11-04 23:39:16Z Julian Mehnle $
+# $Id: Mod.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -113,14 +113,14 @@ sub parse {
     defined($self->{parse_text})
         or throw Mail::SPF::ENothingToParse('Nothing to parse for modifier');
     $self->parse_name();
-    $self->parse_params();
+    $self->parse_params(TRUE);
     $self->parse_end();
     return;
 }
 
 sub parse_name {
     my ($self) = @_;
-    if ($self->{parse_text} =~ s/^(${\$self->name_pattern})=//i) {
+    if ($self->{parse_text} =~ s/^(${\$self->name_pattern})=//) {
         $self->{name} = $1;
     }
     else {
@@ -131,22 +131,14 @@ sub parse_name {
 }
 
 sub parse_params {
-    my ($self) = @_;
-    # Parse generic string of parameters text (should be overridden in sub-classes):
-    if ($self->{parse_text} =~ s/^(.*)//) {
+    my ($self, $required) = @_;
+    # Parse generic macro-string of parameters text (should be overridden in sub-classes):
+    if ($self->{parse_text} =~ s/^(${\$self->macro_string_pattern})$//) {
         $self->{params_text} = $1;
     }
-    return;
-}
-
-sub parse_domain_spec {
-    my ($self, $required) = @_;
-    if ($self->{parse_text} =~ s#^([^\s/]+)\.?##) {
-        $self->{domain_spec} = Mail::SPF::MacroString->new(text => $1);
-    }
     elsif ($required) {
-        throw Mail::SPF::ETermDomainSpecExpected(
-            "Missing required domain-spec in '" . $self->text . "'");
+        throw Mail::SPF::EInvalidMacroString(
+            "Invalid macro string encountered in '" . $self->text . "'");
     }
     return;
 }
@@ -354,7 +346,7 @@ L<Mail::SPF::GlobalMod>, L<Mail::SPF::PositionalMod>
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>
 
-L<http://www.ietf.org/rfc/rfc4408.txt|"RFC 4408">
+L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

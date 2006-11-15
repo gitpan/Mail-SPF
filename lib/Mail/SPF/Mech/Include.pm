@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Include.pm 14 2006-11-04 15:30:34Z Julian Mehnle $
+# $Id: Include.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -27,7 +27,7 @@ use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;
 
 use constant name           => 'include';
-use constant name_pattern   => qr/${\name}/;
+use constant name_pattern   => qr/${\name}/i;
 
 =head1 DESCRIPTION
 
@@ -111,7 +111,7 @@ sub parse_params {
 
 sub params {
     my ($self) = @_;
-    return $self->{domain_spec};
+    return defined($self->{domain_spec}) ? ':' . $self->{domain_spec} : undef;
 }
 
 =item B<stringify>
@@ -150,11 +150,16 @@ See RFC 4408, 5.2, for the exact algorithm used.
 sub match {
     my ($self, $server, $request) = @_;
     
-    # Clone request with mutated authority domain:
+    $server->count_dns_interactive_term($request);
+    
+    # Create sub-request with mutated authority domain:
     my $authority_domain = $self->domain($server, $request);
-    my $subrequest = $request->new(authority_domain => $authority_domain);
-    # Perform sub-request:
-    my $result = $server->process($subrequest);
+    my $sub_request = $request->new_sub_request(authority_domain => $authority_domain);
+    # FIXME Do we need to copy the current request's explanation to the sub-request? (RFC 4408, 6.2/13)
+    #$sub_request->state('explanation') = $request->state('explanation');
+        # FIXME It would not work this way anyway, because Mail::SPF::Server::process() overrides it! (Change?)
+    # Process sub-request:
+    my $result = $server->process($sub_request);
     
     # Translate result of sub-request (RFC 4408, 5/9):
     
@@ -180,7 +185,7 @@ sub match {
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>, L<Mail::SPF::Mech>
 
-L<http://www.ietf.org/rfc/rfc4408.txt|"RFC 4408">
+L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

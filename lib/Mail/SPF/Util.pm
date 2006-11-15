@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Util.pm 10 2006-10-17 19:11:57Z Julian Mehnle $
+# $Id: Util.pm 25 2006-11-15 15:58:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -261,7 +261,7 @@ sub valid_domain_for_ip_address {
                     }
                     else {
                         # TODO Generate debug info or ignore silently!
-                        warn("PTR/$addr_rr_type: unexpected RR type " . $addr_rr->type);
+                        #warn("PTR/$addr_rr_type: unexpected RR type " . $addr_rr->type);
                     }
                 }
             }
@@ -288,7 +288,7 @@ sub valid_domain_for_ip_address {
         }
         else {
             # TODO Generate debug info or ignore silently!
-            warn('PTR: unexpected RR type ' . $ptr_rr->type);
+            #warn('PTR: unexpected RR type ' . $ptr_rr->type);
         }
     }
     

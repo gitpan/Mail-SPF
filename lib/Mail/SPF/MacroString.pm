@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: MacroString.pm 16 2006-11-04 23:39:16Z Julian Mehnle $
+# $Id: MacroString.pm 25 2006-11-15 15:58:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -22,7 +22,8 @@ use strict;
 use base 'Mail::SPF::Base';
 
 use overload
-    '""' => \&stringify;
+    '""'        => 'stringify',
+    fallback    => 1;
 
 use Error ':try';
 use URI::Escape ();
@@ -115,6 +116,14 @@ The I<Mail::SPF::Request> object that is to be used when expanding the macro
 string.  A request object need not be attached statically to the macro string;
 it can be specified dynamically when calling the C<expand> method.
 
+=item B<is_explanation>
+
+A I<boolean> denoting whether the macro string is an explanation string
+obtained via an C<exp> modifier.  If B<true>, the C<c>, C<r>, and C<t> macros
+may appear in the macro string, otherwise they may not and a
+I<Mail::SPF::EInvalidMacro> exception will be thrown when the macro string is
+expanded.  Defaults to B<false>.
+
 =back
 
 =cut
@@ -175,10 +184,16 @@ the resulting string.  See RFC 4408, 8, for how macros are expanded.
 sub expand {
     my ($self, @context) = @_;
     
+    return $self->{expanded}
+        if defined($self->{expanded});
+    
     my $text = $self->{text};
     return undef
         if not defined($text);
     
+    return $self->{expanded} = $text
+        if $text !~ /%/;  # Short-circuit expansion if text has no '%' character.
+
     my ($server, $request) = @context ? @context : ($self->{server}, $self->{request});
     $self->_is_valid_context(TRUE, $server, $request);
     
@@ -214,6 +229,8 @@ sub expand {
                 }
                 elsif ($char eq 'i') {  # RFC 4408, 8.1/20, 8.1/21
                     my $ip_address = $request->ip_address;
+                    $ip_address = Mail::SPF::Util->ipv6_address_to_ipv4($ip_address)
+                        if Mail::SPF::Util->ipv6_address_is_ipv4_mapped($ip_address);
                     my $ip_address_version = $ip_address->version;
                     if ($ip_address_version == 4) {
                         $value = $ip_address->addr;
@@ -255,23 +272,40 @@ sub expand {
                     $value = $request->helo_identity || 'unknown';
                 }
                 elsif ($char eq 'c') {  # RFC 4408, 8.1/20, 8.1/21
+                    $self->{is_explanation}
+                        or throw Mail::SPF::EInvalidMacro(
+                                "Illegal 'c' macro encountered at pos $pos in non-explanation macro string");
                     my $ip_address = $request->ip_address;
-                    if (Mail::SPF::Util->ipv6_address_is_ipv4_mapped($ip_address)) {
-                        $value = Mail::SPF::Util->ipv6_address_to_ipv4($ip_address)->addr;
+                    $ip_address = Mail::SPF::Util->ipv6_address_to_ipv4($ip_address)
+                        if Mail::SPF::Util->ipv6_address_is_ipv4_mapped($ip_address);
+                    my $ip_address_version = $ip_address->version;
+                    if ($ip_address_version == 4) {
+                        $value = $ip_address->addr;
+                    }
+                    elsif ($ip_address_version == 6) {
+                        $value = $ip_address->short;
                     }
                     else {
-                        $value = $ip_address->addr;
+                        # Unexpected IP address version.
+                        throw Mail::SPF::Result::PermError($request,
+                            "Unexpected IP address version '$ip_address_version' in request");
                     }
                 }
                 elsif ($char eq 'r') {  # RFC 4408, 8.1/23
+                    $self->{is_explanation}
+                        or throw Mail::SPF::EInvalidMacro(
+                                "Illegal 'r' macro encountered at pos $pos in non-explanation macro string");
                     $value = Mail::SPF::Util->hostname || 'unknown';
                 }
                 elsif ($char eq 't') {  # RFC 4408, 8.1/24
+                    $self->{is_explanation}
+                        or throw Mail::SPF::EInvalidMacro(
+                                "Illegal 't' macro encountered at pos $pos in non-explanation macro string");
                     $value = $^O ne 'MacOS' ? time() : time() + $self->macos_epoch_offset;
                 }
                 else {
                     # Unknown macro character.
-                    throw Mail::SPF::Result::PermError($request,
+                    throw Mail::SPF::EInvalidMacro(
                         "Unknown macro character '$char' at pos $pos in macro string");
                 }
                 
@@ -285,7 +319,7 @@ sub expand {
                         splice(@list, 0, @list >= $rh_parts ? @list - $rh_parts : 0);
                     }
                     if (defined($rh_parts) and $rh_parts == 0) {
-                        throw Mail::SPF::Result::PermError($request,
+                        throw Mail::SPF::EInvalidMacro(
                             "Illegal selection of 0 (zero) right-hand parts " .
                             "at pos $pos in macro string");
                     }
@@ -302,8 +336,7 @@ sub expand {
             }
             else {
                 # Invalid macro expression.
-                throw Mail::SPF::Result::PermError($request,
-                    "Invalid macro expression at pos $pos in macro string");
+                throw Mail::SPF::EInvalidMacro("Invalid macro expression at pos $pos in macro string");
             }
         }
         elsif ($key eq '-') {
@@ -317,16 +350,27 @@ sub expand {
         }
         else {
             # Invalid macro expression.
-            throw Mail::SPF::Result::PermError($request,
-                "Invalid macro expression at pos $pos in macro string");
+            throw Mail::SPF::EInvalidMacro("Invalid macro expression at pos $pos in macro string");
         }
     }
     
     $expanded .= substr($text, pos($text));  # Append remaining unmatched characters.
     
-    print("DEBUG: Expand $text -> $expanded\n");
-    return $self->{expanded} = $expanded;
+    #print("DEBUG: Expand $text -> $expanded\n");
+    #printf("DEBUG:   Caller: %s() (line %d)\n", (caller(1))[3, 2]);
+    return @context ? $expanded : ($self->{expanded} = $expanded);
 }
+
+=item B<is_explanation>: returns I<boolean>
+
+Returns B<true> if the macro string is an explanation string obtained via an
+C<exp> modifier.  See the description of the L</new> constructor's
+C<is_explanation> option.
+
+=cut
+
+# Make read-only accessor:
+__PACKAGE__->make_accessor('is_explanation', TRUE);
 
 =item B<stringify>: returns I<string>
 
@@ -371,7 +415,7 @@ method is used to convert the object into a string.
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Server>, L<Mail::SPF::Request>
 
-L<http://www.ietf.org/rfc/rfc4408.txt|"RFC 4408">
+L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

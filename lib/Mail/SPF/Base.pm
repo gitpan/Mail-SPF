@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Base.pm 14 2006-11-04 15:30:34Z Julian Mehnle $
+# $Id: Base.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -112,7 +112,7 @@ sub make_accessor {
         $accessor = sub {
             local *__ANON__ = $accessor_name;
             my ($self, @value) = @_;
-            throw Mail::SPF::EInstanceMethod() if not ref($self);
+            throw Mail::SPF::EInstanceMethod if not ref($self);
             throw Mail::SPF::EReadOnlyValue("$accessor_name is read-only") if @value;
             return $self->{$name};
         };
@@ -121,7 +121,7 @@ sub make_accessor {
         $accessor = sub {
             local *__ANON__ = $accessor_name;
             my ($self, @value) = @_;
-            throw Mail::SPF::EInstanceMethod() if not ref($self);
+            throw Mail::SPF::EInstanceMethod if not ref($self);
             $self->{$name} = $value[0] if @value;
             return $self->{$name};
         };

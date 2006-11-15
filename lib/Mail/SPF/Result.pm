@@ -3,7 +3,7 @@
 # SPF result class.
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
-# $Id: Result.pm 16 2006-11-04 23:39:16Z Julian Mehnle $
+# $Id: Result.pm 25 2006-11-15 15:58:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -18,9 +18,9 @@ Mail::SPF::Result - SPF result class
 use warnings;
 use strict;
 
-use base 'Mail::SPF::Exception', 'Mail::SPF::Base';
+use base 'Error', 'Mail::SPF::Base';
     # An SPF result is not really a code exception in ideology, but in form.
-    # The Mail::SPF::Exception base class exactly fits our purpose, anyway.
+    # The Error base class fits our purpose, anyway.
 
 use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;
@@ -150,6 +150,21 @@ sub throw {
     die($Error::THROWN = $self);
 }
 
+=item B<name>: returns I<string>
+
+Returns the trailing part of the name of the I<Mail::SPF::Result::*> class on
+which it is invoked.  For example, returns C<NeutralByDefault> if invoked on
+I<Mail::SPF::Result::NeutralByDefault>.  This method may also be used as an
+instance method.
+
+=cut
+
+sub name {
+    my ($self) = @_;
+    my $class = ref($self) || $self;
+    return $class =~ /^Mail::SPF::Result::(\w+)$/ ? $1 : $class;
+}
+
 =item B<code>: returns I<string>
 
 Returns the result code (C<"pass">, C<"fail">, C<"softfail">, C<"neutral">,
@@ -222,7 +237,25 @@ __PACKAGE__->make_accessor('request', TRUE);
 
 Returns the text message of the result object.
 
+=item B<stringify>: returns I<string>
+
+Returns the result's name and text message formatted as a string.  You can
+simply use a Mail::SPF::Result object as a string for the same effect, see
+L</OVERLOADING>.
+
+=cut
+
+sub stringify {
+    my ($self) = @_;
+    return sprintf("%s (%s)", $self->name, $self->SUPER::stringify);
+}
+
 =back
+
+=head1 OVERLOADING
+
+If a Mail::SPF::Result object is used as a I<string>, the L</stringify> method
+is used to convert the object into a string.
 
 =head1 RESULT CLASSES
 
@@ -238,12 +271,11 @@ The following additional instance method is provided:
 
 =over
 
-=item B<explanation>: returns I<MacroString>
+=item B<explanation>: returns I<string>
 
-Returns the explanation for the C<fail> result as a I<MacroString> object,
-which may be used as a I<string>.  Be aware that the explanation is provided by
-a potentially malicious party and thus should not be trusted.  See RFC 4408,
-10.5, for a more detailed discussion of this issue.
+Returns the explanation string for the C<fail> result.  Be aware that the
+explanation is provided by a potentially malicious party and thus should not be
+trusted.  See RFC 4408, 10.5, for a more detailed discussion of this issue.
 
 =back
 
@@ -289,7 +321,7 @@ sub new {
     my ($self, @args) = @_;
     local $Error::Depth = $Error::Depth + 1;
     $self = $self->SUPER::new(@args);
-    $self->{explanation} = $self->{request}->state('explanation');
+    $self->{explanation} = $self->{request}->state('explanation')->expand;
     return $self;
 }
 
@@ -331,7 +363,7 @@ use constant code => 'temperror';
 
 L<Mail::SPF>, L<Mail::SPF::Server>, L<Error>, L<perlfunc/eval>
 
-L<http://www.ietf.org/rfc/rfc4408.txt|"RFC 4408">
+L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

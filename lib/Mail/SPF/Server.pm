@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Server.pm 16 2006-11-04 23:39:16Z Julian Mehnle $
+# $Id: Server.pm 25 2006-11-15 15:58:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -51,7 +51,11 @@ use constant default_default_explanation        =>
 
     use Mail::SPF;
     
-    my $spf_server  = Mail::SPF::Server->new();
+    my $spf_server  = Mail::SPF::Server->new(
+        # Optional default explanation:
+        default_explanation => 'See http://www.%{d}/why/s=%{S};i=%{I};r=%{R}'
+    );
+    
     my $result      = $spf_server->process($request);
 
 =cut
@@ -63,9 +67,8 @@ use constant default_default_explanation        =>
 
 B<Mail::SPF::Server> is a server class for processing SPF requests.  Each
 server instance can be configured with specific processing parameters and has
-its own result cache (TODO).  Also, the default I<Net::DNS::Resolver> DNS
-resolver used for making DNS look-ups can be overridden with a custom resolver
-object.
+its own DNS cache (TODO).  Also, the default I<Net::DNS::Resolver> DNS resolver
+used for making DNS look-ups can be overridden with a custom resolver object.
 
 =head2 Constructor
 
@@ -98,8 +101,9 @@ per SPF record that perform DNS look-ups, as defined in RFC 4408, 10.1,
 paragraph 6.  If B<undef> is specified, there is no limit on the number of such
 terms.  Defaults to B<10>, which is the value defined in RFC 4408.
 
-Deviating from the default is I<strongly discouraged> for reasons of security
-and predictability of SPF results!
+A value above the default is I<strongly discouraged> for security reasons.  A
+value below the default has implications with regard to the predictability of
+SPF results.  Only deviate from the default if you know what you are doing!
 
 =item B<max_name_lookups_per_term>
 
@@ -108,8 +112,9 @@ An I<integer> denoting the maximum number of DNS name look-ups per term
 B<undef> is specified, there is no limit on the number of look-ups performed.
 Defaults to B<10>, which is the value defined in RFC 4408.
 
-Deviating from the default is I<strongly discouraged> for reasons of security
-and predictability of SPF results!
+A value above the default is I<strongly discouraged> for security reasons.  A
+value below the default has implications with regard to the predictability of
+SPF results.  Only deviate from the default if you know what you are doing!
 
 =item B<max_name_lookups_per_mx_mech>
 
@@ -136,20 +141,21 @@ sub new {
     
     $self->{dns_resolver} ||= Net::DNS::Resolver->new();
     
-    $self->{max_dns_interactive_terms}     = $self->default_max_dns_interactive_terms
-                                      if not exists($self->{max_dns_interactive_terms});
-    $self->{max_name_lookups_per_term}     = $self->default_max_name_lookups_per_term
-                                      if not exists($self->{max_name_lookups_per_term});
-    $self->{max_name_lookups_per_mx_mech}  = $self->default_max_name_lookups_per_mx_mech
-                                      if not exists($self->{max_name_lookups_per_mx_mech});
-    $self->{max_name_lookups_per_ptr_mech} = $self->default_max_name_lookups_per_ptr_mech
-                                      if not exists($self->{max_name_lookups_per_ptr_mech});
+    $self->{max_dns_interactive_terms}      = $self->default_max_dns_interactive_terms
+                                       if not exists($self->{max_dns_interactive_terms});
+    $self->{max_name_lookups_per_term}      = $self->default_max_name_lookups_per_term
+                                       if not exists($self->{max_name_lookups_per_term});
+    $self->{max_name_lookups_per_mx_mech}   = $self->default_max_name_lookups_per_mx_mech
+                                       if not exists($self->{max_name_lookups_per_mx_mech});
+    $self->{max_name_lookups_per_ptr_mech}  = $self->default_max_name_lookups_per_ptr_mech
+                                       if not exists($self->{max_name_lookups_per_ptr_mech});
     
     $self->{default_explanation} = $self->default_default_explanation
         if not defined($self->{default_explanation});
     $self->{default_explanation} = Mail::SPF::MacroString->new(
-        text    => $self->{default_explanation},
-        server  => $self
+        text            => $self->{default_explanation},
+        server          => $self,
+        is_explanation  => TRUE
     )
         if not UNIVERSAL::isa($self->{default_explanation}, 'Mail::SPF::MacroString');
     
@@ -213,6 +219,7 @@ sub process {
     
     my $explanation = $self->{default_explanation}->new(request => $request);
     $request->state('explanation', $explanation);
+    $request->state('dns_interactive_terms_count', 0);
     
     my $result;
     try {
@@ -229,58 +236,54 @@ sub process {
         
         my @records;
         
+        # Query for SPF type RRs first:
         try {
-            # Query for SPF type RRs first:
-            try {
-                my $packet = $self->dns_lookup($domain, 'SPF');
-                push(
-                    @records,
-                    $self->get_acceptable_records_from_packet(
-                        $packet, 'SPF', \@versions, $scope, $domain)
-                );
-            }
-            catch Mail::SPF::EDNSTimeout with {
-                # FIXME Ignore DNS time-outs on SPF type lookups?
-                warn('XXX: DNS time-out on SPF RR-type lookup (Server.pm:151)');
-                # Apparrently some brain-dead DNS servers time out on SPF-type queries.
-            };
-            
-            if (not @records) {
-                # No usable SPF-type RRs, try TXT-type RRs.
-                
-                # NOTE:
-                #   This deliberately violates RFC 4406 (Sender ID), 4.4/3 (4.4.1):
-                #   TXT-type RRs are still tried if there _are_ SPF-type RRs but all of
-                #   them are inapplicable (i.e. "Hi!", or even "spf2.0/pra" for an
-                #   'mfrom' scope request).  This conforms to the spirit of the more
-                #   sensible algorithm in RFC 4408 (SPF), 4.5.
-                #   Implication:  Sender ID processing may make use of existing TXT-
-                #   type records where a result of "None" would normally be returned
-                #   under a strict interpretation of RFC 4406.
-                
-                my $packet = $self->dns_lookup($domain, 'TXT');
-                push(
-                    @records,
-                    $self->get_acceptable_records_from_packet(
-                        $packet, 'TXT', \@versions, $scope, $domain)
-                );
-            }
+            my $packet = $self->dns_lookup($domain, 'SPF');
+            push(
+                @records,
+                $self->get_acceptable_records_from_packet(
+                    $packet, 'SPF', \@versions, $scope, $domain)
+            );
         }
-        catch Mail::SPF::EDNSError with {
-            my ($e) = @_;
-            throw Mail::SPF::Result::TempError($request, $e->text);
+        catch Mail::SPF::EDNSTimeout with {
+            # FIXME Ignore DNS time-outs on SPF type lookups?
+            #warn('XXX: DNS time-out on SPF RR-type lookup (Server.pm:258)');
+            # Apparrently some brain-dead DNS servers time out on SPF-type queries.
         };
+        
+        if (not @records) {
+            # No usable SPF-type RRs, try TXT-type RRs.
+            
+            # NOTE:
+            #   This deliberately violates RFC 4406 (Sender ID), 4.4/3 (4.4.1):
+            #   TXT-type RRs are still tried if there _are_ SPF-type RRs but all of
+            #   them are inapplicable (i.e. "Hi!", or even "spf2.0/pra" for an
+            #   'mfrom' scope request).  This conforms to the spirit of the more
+            #   sensible algorithm in RFC 4408 (SPF), 4.5.
+            #   Implication:  Sender ID processing may make use of existing TXT-
+            #   type records where a result of "None" would normally be returned
+            #   under a strict interpretation of RFC 4406.
+            
+            my $packet = $self->dns_lookup($domain, 'TXT');
+            push(
+                @records,
+                $self->get_acceptable_records_from_packet(
+                    $packet, 'TXT', \@versions, $scope, $domain)
+            );
+        }
         
         @records
             or throw Mail::SPF::Result::None($request,
                 "No acceptable TXT/SPF records available for domain '$domain'");  # RFC 4408, 4.5/7
         
-        # TODO Discard all records but the highest acceptable version:
-        STDERR->print("DEBUG: Acceptable records:");
-        foreach my $record (@records) {
-            STDERR->print("$record\n");
-        }
+        #STDERR->print("DEBUG: Acceptable records:\n");
+        #foreach my $record (@records) {
+        #    STDERR->print("  $record\n");
+        #}
         
+        # TODO Discard all records but the highest acceptable version!
+        #...
+
         @records == 1
             or throw Mail::SPF::Result::PermError($request,
                 "Redundant applicable records found for domain '$domain'");  # RFC 4408, 4.5/6
@@ -288,12 +291,19 @@ sub process {
         $records[0]->eval($self, $request);
     }
     catch Mail::SPF::Result with {
-        ($result) = @_;
+        $result = shift;
+    }
+    catch Mail::SPF::ESyntaxError with {
+        $result = Mail::SPF::Result::PermError->new($request, shift->text);
+    }
+    catch Mail::SPF::EProcessingLimitExceeded with {
+        $result = Mail::SPF::Result::PermError->new($request, shift->text);
+    }
+    catch Mail::SPF::EDNSError with {
+        $result = Mail::SPF::Result::TempError->new($request, shift->text);
     };
     # Propagate other, unknown errors.
-      #otherwise {
-      #    # FIXME Some unknown error occurred.  Propagate?
-      #}
+    # This should not happen, but if it does, it helps exposing the bug!
     
     return $result;
 }
@@ -311,7 +321,16 @@ error (other than RCODE 3 AKA C<NXDOMAIN>) occurred.
 
 sub dns_lookup {
     my ($self, $domain, $rr_type) = @_;
-    STDERR->print("DEBUG: DNS lookup: $domain $rr_type\n");
+    #STDERR->print("DEBUG: DNS lookup: $domain $rr_type\n");
+    
+    if (UNIVERSAL::isa($domain, 'Mail::SPF::MacroString')) {
+        # Expand macro string, and truncate domain name if longer than 253 bytes (RFC 4408, 8.1/25):
+        $domain = $domain->expand;
+        $domain =~ s/^[^.]+\.(.*)$/$1/
+            while length($domain) > 253;
+    }
+    $domain =~ s/^(.*?)\.?$/\L$1/;  # Normalize domain.
+    
     my $packet = $self->dns_resolver->send($domain, $rr_type);
     
     # Throw DNS exception unless an answer packet with RCODE 0 or 3 (NXDOMAIN)
@@ -325,8 +344,6 @@ sub dns_lookup {
     $packet->header->rcode =~ /^(NOERROR|NXDOMAIN)$/
         or throw Mail::SPF::EDNSError(
             "'" . $packet->header->rcode . "' error on '$rr_type' DNS lookup of '$domain'");
-    
-    # TODO Follow CNAMEs transparently!
     
     return $packet;
 }
@@ -345,18 +362,14 @@ sub get_acceptable_records_from_packet {
     my ($self, $packet, $rr_type, $versions, $scope, $domain) = @_;
     my @records;
     foreach my $rr ($packet->answer) {
-        warn('XXX: get_usable_records_from_packet(): unexpected RR type: ' . $rr->type),
-        next if $rr->type ne $rr_type;
-            # Ignore RRs of unexpected type. XXX Warn?
-        warn('XXX: get_usable_records_from_packet(): RR for unexpected domain: ' . $rr->name),
-        next if $rr->name ne $domain;
-            # Ignore RRs belonging to unexpected domains. XXX Needed? Warn?
+        next if $rr->type ne $rr_type;  # Ignore RRs of unexpected type.
         
         my $text = join('', $rr->char_str_list);
         my $record;
         
         # Try to parse RR as each of the requested record versions,
         # starting from the highest version:
+        VERSION:
         foreach my $version (@$versions) {
             my $class = $self->record_classes_by_version->{$version};
             eval("require $class");
@@ -364,9 +377,9 @@ sub get_acceptable_records_from_packet {
                 $record = $class->new_from_string($text);
             }
             catch Mail::SPF::EInvalidRecordVersion with {};
-            #catch Mail::SPF::PermError with {};  # FIXME
-                # Ignore non-SPF and unknown-version records [, and syntax errors].
-                # Propagate other errors, though.
+                # Ignore non-SPF and unknown-version records.
+                # Propagate other errors (including syntax errors), though.
+            last VERSION if defined($record);
         }
         
         push(@records, $record)
@@ -374,6 +387,34 @@ sub get_acceptable_records_from_packet {
             and grep($scope eq $_, $record->scopes);  # record covers requested scope?
     }
     return @records;
+}
+
+=item B<count_dns_interactive_term($request)>: throws I<Mail::SPF::EProcessingLimitExceeded>
+
+Increments by one the count of DNS-interactive mechanisms and modifiers that
+have been processed so far during the evaluation of the given
+I<Mail::SPF::Request> object.  If this exceeds the configured limit (see the
+L</new> constructor's C<max_dns_interactive_terms> option), throws a
+I<Mail::SPF::EProcessingLimitExceeded> exception.
+
+This method is supposed to be called by the C<match> and C<process> methods of
+I<Mail::SPF::Mech> and I<Mail::SPF::Mod> sub-classes before (and only if) they
+do any DNS look-ups.
+
+=cut
+
+sub count_dns_interactive_term {
+    my ($self, $request) = @_;
+    my $dns_interactive_terms_count = ++$request->root_request->state('dns_interactive_terms_count');
+    my $max_dns_interactive_terms = $self->max_dns_interactive_terms;
+    if (
+        defined($max_dns_interactive_terms) and
+        $dns_interactive_terms_count > $max_dns_interactive_terms
+    ) {
+        throw Mail::SPF::EProcessingLimitExceeded(
+            "Maximum DNS-interactive terms limit ($max_dns_interactive_terms) exceeded");
+    }
+    return;
 }
 
 =item B<dns_resolver>: returns I<Net::DNS::Resolver> or compatible object
@@ -418,7 +459,7 @@ __PACKAGE__->make_accessor($_, TRUE)
 
 L<Mail::SPF>, L<Mail::SPF::Request>, L<Mail::SPF::Result>
 
-L<http://www.ietf.org/rfc/rfc4408.txt|"RFC 4408">
+L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

@@ -1,6 +1,6 @@
-libmail-spf-perl (2.000+001) UNRELEASED; urgency=low
+libmail-spf-perl (2.000+002) UNRELEASED; urgency=low
 
-  > 2.001 pre-release.
+  > Pre-release.
   > Major overhaul:
     ! Major code refactoring.
     ! Switched from EU::MM to Module::Build.
@@ -8,6 +8,12 @@ libmail-spf-perl (2.000+001) UNRELEASED; urgency=low
     + Added complete documentation.
     + Added unit tests.
     + And more...
+
+ -- Julian Mehnle <julian@mehnle.net>  Wed, 15 Nov 2006 02:00:00 +0000
+
+libmail-spf-perl (2.000+001) UNRELEASED; urgency=low
+
+  > Pre-release.
 
  -- Julian Mehnle <julian@mehnle.net>  Sat,  4 Nov 2006 23:45:00 +0000
 

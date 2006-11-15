@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Mech.pm 16 2006-11-04 23:39:16Z Julian Mehnle $
+# $Id: Mech.pm 25 2006-11-15 15:58:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -40,8 +40,7 @@ use constant {
 
 use constant {
     qualifier_pattern   => qr/[+\-~?]/,
-    name_pattern        => qr/ ${\__PACKAGE__->SUPER::name_pattern} (?= : | \x20 | $ ) /x,
-    qnum_pattern        => qr/ \d | [1-9]\d | 1\d\d | 2[0-4]\d | 25[0-5] /x
+    name_pattern        => qr/ ${\__PACKAGE__->SUPER::name_pattern} (?= [:\/\x20] | $ ) /x
 };
 
 =head1 DESCRIPTION
@@ -192,7 +191,7 @@ sub parse_qualifier {
 
 sub parse_name {
     my ($self) = @_;
-    if ($self->{parse_text} =~ s/^(${\$self->name_pattern})($|:(?=\S))//i) {
+    if ($self->{parse_text} =~ s/^ (${\$self->name_pattern}) (?: : (?=.) )? //x) {
         $self->{name} = $1;
     }
     else {
@@ -207,104 +206,6 @@ sub parse_params {
     # Parse generic string of parameters text (should be overridden in sub-classes):
     if ($self->{parse_text} =~ s/^(.*)//) {
         $self->{params_text} = $1;
-    }
-    return;
-}
-
-sub parse_domain_spec {
-    my ($self, $required) = @_;
-    if ($self->{parse_text} =~ s#^([^\s/]+)\.?##) {
-        $self->{domain_spec} = Mail::SPF::MacroString->new(text => $1);
-    }
-    elsif ($required) {
-        throw Mail::SPF::ETermDomainSpecExpected(
-            "Missing required domain-spec in '" . $self->text . "'");
-    }
-    return;
-}
-
-sub parse_ipv4_address {
-    my ($self, $required) = @_;
-    my $QNUM = $self->qnum_pattern;
-    if ($self->{parse_text} =~ s/^($QNUM(?:\.$QNUM){3})//) {
-        $self->{ip_address} = $1;
-    }
-    elsif ($required) {
-        throw Mail::SPF::ETermIPv4AddressExpected(
-            "Missing required IPv4 address in '" . $self->text . "'");
-    }
-    return;
-}
-
-sub parse_ipv4_prefix_length {
-    my ($self, $required) = @_;
-    if ($self->{parse_text} =~ s#^/(\d+)## and $1 >= 0 and $1 <= 32) {
-        $self->{ipv4_prefix_length} = $1;
-    }
-    elsif (not $required) {
-        $self->{ipv4_prefix_length} = $self->default_ipv4_prefix_length;
-    }
-    else {
-        throw Mail::SPF::ETermIPv4PrefixLengthExpected(
-            "Missing required IPv4 prefix length in '" . $self->text . "'");
-    }
-    return;
-}
-
-sub parse_ipv4_network {
-    my ($self, $required) = @_;
-    $self->parse_ipv4_address($required);
-    $self->parse_ipv4_prefix_length();
-    $self->{ip_network} = Mail::SPF::Util->ipv4_address_to_ipv6(
-        NetAddr::IP->new($self->{ip_address}, $self->{ipv4_prefix_length}));
-    return;
-}
-
-sub parse_ipv6_address {
-    my ($self, $required) = @_;
-    if ($self->{parse_text} =~ s/^([:\p{IsXDigit}]+)//) {
-        $self->{ip_address} = $1;
-    }
-    elsif ($required) {
-        throw Mail::SPF::ETermIPv6AddressExpected(
-            "Missing required IPv6 address in '" . $self->text . "'");
-    }
-    return;
-}
-
-sub parse_ipv6_prefix_length {
-    my ($self, $required) = @_;
-    if ($self->{parse_text} =~ s#^//(\d+)## and $1 >= 0 and $1 <= 128) {
-        $self->{ipv6_prefix_length} = $1;
-    }
-    elsif (not $required) {
-        $self->{ipv6_prefix_length} = $self->default_ipv6_prefix_length;
-    }
-    else {
-        throw Mail::SPF::ETermIPv6PrefixLengthExpected(
-            "Missing required IPv6 prefix length in '" . $self->text . "'");
-    }
-    return;
-}
-
-sub parse_ipv6_network {
-    my ($self, $required) = @_;
-    $self->parse_ipv6_address($required);
-    $self->parse_ipv6_prefix_length();
-    $self->{ip_network} = NetAddr::IP->new(
-        $self->{ip_address}, $self->{ipv6_prefix_length});
-    return;
-}
-
-sub parse_ipv4_ipv6_prefix_lengths {
-    my ($self) = @_;
-    $self->parse_ipv4_prefix_length();
-    if (
-        defined($self->{ipv4_prefix_length}) and  # an IPv4 prefix length has been parsed, and
-        $self->{parse_text} =~ s#^/##             # another slash is following
-    ) {
-        # Parse an IPv6 prefix length:
-        $self->parse_ipv6_prefix_length(TRUE);
     }
     return;
 }
@@ -368,7 +269,7 @@ sub stringify {
         '%s%s%s',
         $self->qualifier eq $self->default_qualifier ? '' : $self->qualifier,
         $self->name,
-        defined($params) ? ':' . $params : ''
+        defined($params) ? $params : ''
     );
 }
 
@@ -389,10 +290,9 @@ sub domain {
         or throw Mail::SPF::EOptionRequired('Server object required for target domain resolution');
     defined($request)
         or throw Mail::SPF::EOptionRequired('Request object required for target domain resolution');
-    return
-        defined($self->{domain_spec}) ?
-            lc($self->{domain_spec}->expand($server, $request))
-        :   $request->domain;
+    return $self->{domain_spec}->new(server => $server, request => $request)
+        if defined($self->{domain_spec});
+    return $request->authority_domain;
 }
 
 =item B<match($server, $request)>: returns I<boolean>; throws I<Mail::SPF::Result::Error>
@@ -427,7 +327,8 @@ Mail::SPF::Mech.
 sub match_in_domain {
     my ($self, $server, $request, $domain) = @_;
     
-    $domain ||= $self->domain($server, $request);
+    $domain = $self->domain($server, $request)
+        if not defined($domain);
     
     my $ipv4_prefix_length  = $self->ipv4_prefix_length;
     my $ipv6_prefix_length  = $self->ipv6_prefix_length;
@@ -447,13 +348,11 @@ sub match_in_domain {
                 if $network->contains($request->ip_address_v6);
         }
         elsif ($rr->type eq 'CNAME') {
-            # TODO Does this case occur in the first place?
-            warn('XXX: got a CNAME $rr (Mech.pm:379)');
             # Ignore -- we should have gotten the A/AAAA records anyway.
         }
         else {
             # TODO Generate debug info or ignore silently!
-            warn(uc($self->name) . ': Unexpected RR type ' . $rr->type);
+            #warn(uc($self->name) . ': Unexpected RR type ' . $rr->type);
         }
     }
     return FALSE;
@@ -479,7 +378,7 @@ L<Mail::SPF::Mech::Include>
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>
 
-L<http://www.ietf.org/rfc/rfc4408.txt|"RFC 4408">
+L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

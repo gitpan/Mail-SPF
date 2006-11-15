@@ -7,6 +7,7 @@
 ##############################################################################
 
 use Module::Build 0.26;
+use version;
 
 my $class = Module::Build->subclass( code => <<'EOF' );
 
@@ -47,30 +48,22 @@ my $build = $class->new(
     license         => 'bsd',
     requires        => {
         # Core requirements:
-        perl            => 5.006,
+        perl            => '5.006',
         version         => 0,
-        Getopt::Long    => 0, # 2.30
-#        IO::Handle      => 0,
-#        IO::File        => 0,
-#        IO::Dir         => 0,
-#        File::Basename  => 0,
-#        File::Spec      => 0,
-#        File::Path      => 0,
-#        File::Find      => 0,
-#        File::Copy      => 0,
+#        Getopt::Long    => 0,
         Error           => 0,
-        NetAddr::IP     => 4.0,
-        Net::DNS        => 0.58,
-        Net::DNS::Resolver::Programmable
-                        => 0,
-        URI             => 1.13
+        NetAddr::IP     => '4.0',
+        Net::DNS        => '0.58',
+        URI             => '1.13'
     },
     recommends      => {
     },
     build_requires  => {
         # Build requirements:
-        Module::Build   => 0.26,
-        Test::More      => 0  # 0.40
+        Module::Build   => '0.26',
+        Test::More      => 0,
+        Net::DNS::Resolver::Programmable
+                        => qv('0.002.1')->numify,
     },
     install_path    => {
 #        'sbin'          => '/usr/sbin'

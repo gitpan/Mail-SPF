@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Request.pm 14 2006-11-04 15:30:34Z Julian Mehnle $
+# $Id: Request.pm 25 2006-11-15 15:58:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -82,15 +82,17 @@ use constant default_localpart => 'postmaster';
 
 An object of class B<Mail::SPF::Request> represents an SPF request.
 
-=head2 Constructor
+=head2 Constructors
 
-The following constructor is provided:
+The following constructors are provided:
 
 =over
 
 =item B<new(%options)>: returns I<Mail::SPF::Request>
 
-Creates a new SPF request object.
+Creates a new SPF request object.  The request is considered the
+I<root-request> for any subsequent sub-requests (see the L</new_sub_request>
+constructor).
 
 %options is a list of key/value pairs representing any of the following
 options:
@@ -265,7 +267,7 @@ sub new {
     $self->{domain} =~ s/^(.*?)\.?$/\L$1/;
         # Lower-case domain and remove eventual trailing dot.
     $self->{localpart} = $self->default_localpart
-        if not defined($self->{localpart});
+        if not defined($self->{localpart}) or not length($self->{localpart});
     
     # HELO identity:
     if ($self->{scope} eq 'helo') {
@@ -300,6 +302,26 @@ sub new {
     return $self;
 }
 
+=item B<new_sub_request(%options)>: returns I<Mail::SPF::Request>
+
+Must be invoked on an existing request object.  Creates a new sub-request
+object by cloning the invoked request, which is then considered the new
+request's I<super-request>.  Any specified options (see the L</new>
+constructor) override the parameters of the super-request.  There is usually no
+need to specify any options I<besides> the C<authority_domain> option.
+
+=cut
+
+sub new_sub_request {
+    my ($super_request, %options) = @_;
+    UNIVERSAL::isa($super_request, __PACKAGE__)
+        or throw Mail::SPF::EInstanceMethod;
+    my $self = $super_request->new(%options);
+    $self->{super_request} = $super_request;
+    $self->{root_request}  = $super_request->root_request;
+    return $self;
+}
+
 =back
 
 =head2 Instance methods
@@ -307,6 +329,28 @@ sub new {
 The following instance methods are provided:
 
 =over
+
+=item B<root_request>: returns I<Mail::SPF::Request>
+
+Returns the root of the request's chain of super-requests.  Specifically,
+returns the request itself if it has no super-requests.
+
+=cut
+
+sub root_request {
+    my ($self) = @_;
+    # Read-only!
+    return $self->{root_request} || $self;
+}
+
+=item B<super_request>: returns I<Mail::SPF::Request>
+
+Returns the super-request of the request, or B<undef> if there is none.
+
+=cut
+
+# Make read-only accessor:
+__PACKAGE__->make_accessor('super_request', TRUE);
 
 =item B<versions>: returns I<list> of I<string>
 
@@ -387,17 +431,18 @@ object.  This is primarily meant to be used internally by I<Mail::SPF::Server>
 and other Mail::SPF classes.
 
 If C<$value> is specified, stores it in a state field named C<$field>.  Returns
-the current (new) value of the state field named C<$field>.
+the current (new) value of the state field named C<$field>.  This method may be
+used as an lvalue.
 
 =cut
 
-sub state {
+sub state :lvalue {
     my ($self, $field, @value) = @_;
     defined($field)
         or throw Mail::SPF::EOptionRequired('Field name required');
     $self->{state}->{$field} = $value[0]
         if @value;
-    return $self->{state}->{$field};
+    $self->{state}->{$field};
 }
 
 =back
@@ -406,7 +451,7 @@ sub state {
 
 L<Mail::SPF>, L<Mail::SPF::Server>
 
-L<http://www.ietf.org/rfc/rfc4408.txt|"RFC 4408">
+L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.
