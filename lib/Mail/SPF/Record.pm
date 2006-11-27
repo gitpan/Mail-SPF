@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Record.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
+# $Id: Record.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -374,15 +374,9 @@ sub eval {
     my ($self, $server, $request) = @_;
     
     defined($server)
-        or throw Mail::SPF::EOptionRequired('Server object required for record evaluation');
+        or throw Mail::SPF::EOptionRequired('Mail::SPF server object required for record evaluation');
     defined($request)
         or throw Mail::SPF::EOptionRequired('Request object required for record evaluation');
-    
-    ## Pre-process global modifiers:
-    #foreach my $global_mod ($self->global_mods) {
-    #    $global_mod->preprocess($server, $request)
-    #        if $global_mod->can('preprocess');
-    #}
     
     try {
         foreach my $term ($self->terms) {
@@ -392,7 +386,10 @@ sub eval {
                 if ($mech->match($server, $request)) {
                     my $result_code  = $self->results_by_qualifier->{$mech->qualifier};
                     my $result_class = Mail::SPF::Result->class_by_code($result_code);
-                    throw $result_class($request, "Mechanism '$term' matched");
+                    my $result = $result_class->new($server, $request, "Mechanism '$term' matched");
+                    $mech->explain($server, $request, $result);
+                    $result->throw();
+                    #throw $result_class($request, "Mechanism '$term' matched");
                 }
             }
             elsif ($term->isa('Mail::SPF::PositionalMod')) {
@@ -411,18 +408,18 @@ sub eval {
         }
         
         # Default result when "falling off" the end of the record (RFC 4408, 4.7/1):
-        throw Mail::SPF::Result::NeutralByDefault($request,
-            'Default "neutral" result due to no mechanism matches');
+        throw Mail::SPF::Result::NeutralByDefault($server, $request,
+            'Default neutral result due to no mechanism matches');
     }
     catch Mail::SPF::Result with {
         my ($result) = @_;
         
         # Process global modifiers:
         foreach my $global_mod ($self->global_mods) {
-            # FIXME Possibly exempt "redirect" modifier and perform last?
-            # FIXME Or, a "priority" property could be introduced for global modifiers.
-            $global_mod->process($server, $request, $result)
-            #    if $global_mod->can('process');
+            # TODO Possibly exempt "redirect" modifier and perform last?
+            # TODO Or, a "priority" property could be introduced for global modifiers.
+            # TODO See TODO file.
+            $global_mod->process($server, $request, $result);
         }
         
         $result->throw();
@@ -441,7 +438,7 @@ is used to convert the object into a string.
 L<Mail::SPF>, L<Mail::SPF::v1::Record>, L<Mail::SPF::v2::Record>,
 L<Mail::SPF::Term>, L<Mail::SPF::Mech>, L<Mail::SPF::Mod>
 
-L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
+L<http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

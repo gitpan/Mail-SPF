@@ -1,17 +1,24 @@
-libmail-spf-perl (2.000+002) UNRELEASED; urgency=low
+mail-spf-perl (2.000+003) unstable; urgency=low
 
   > Pre-release.
   > Major overhaul:
-    ! Major code refactoring.
+    ! Major code refactoring, achieving full RFC 4408/4406 compliance.
     ! Switched from EU::MM to Module::Build.
-    + Added Debian package control files.
+    + Added complete rewrites of spfquery (2.500) and spfd (2.000).
     + Added complete documentation.
-    + Added unit tests.
+    + Added unit tests and the RFC 4408 test-suite.
+    + Added Debian package control files.
     + And more...
+
+ -- Julian Mehnle <julian@mehnle.net>  Mon, 27 Nov 2006 20:00:00 +0000
+
+mail-spf-perl (2.000+002) unstable; urgency=low
+
+  > Pre-release.
 
  -- Julian Mehnle <julian@mehnle.net>  Wed, 15 Nov 2006 02:00:00 +0000
 
-libmail-spf-perl (2.000+001) UNRELEASED; urgency=low
+mail-spf-perl (2.000+001) unstable; urgency=low
 
   > Pre-release.
 

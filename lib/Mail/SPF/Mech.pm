@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Mech.pm 25 2006-11-15 15:58:51Z Julian Mehnle $
+# $Id: Mech.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -41,6 +41,13 @@ use constant {
 use constant {
     qualifier_pattern   => qr/[+\-~?]/,
     name_pattern        => qr/ ${\__PACKAGE__->SUPER::name_pattern} (?= [:\/\x20] | $ ) /x
+};
+
+use constant explanation_templates_by_result_code => {
+    pass        => "Sender is authorized to use '%{s}' in '%{_scope}' identity",
+    fail        => "Sender is not authorized to use '%{s}' in '%{_scope}' identity",
+    softfail    => "Sender is not authorized to use '%{s}' in '%{_scope}' identity, however domain is not currently prepared for false failures",
+    neutral     => "Domain does not state whether sender is authorized to use '%{s}' in '%{_scope}' identity"
 };
 
 =head1 DESCRIPTION
@@ -287,7 +294,7 @@ resolving the target domain.
 sub domain {
     my ($self, $server, $request) = @_;
     defined($server)
-        or throw Mail::SPF::EOptionRequired('Server object required for target domain resolution');
+        or throw Mail::SPF::EOptionRequired('Mail::SPF server object required for target domain resolution');
     defined($request)
         or throw Mail::SPF::EOptionRequired('Request object required for target domain resolution');
     return $self->{domain_spec}->new(server => $server, request => $request)
@@ -351,11 +358,57 @@ sub match_in_domain {
             # Ignore -- we should have gotten the A/AAAA records anyway.
         }
         else {
-            # TODO Generate debug info or ignore silently!
-            #warn(uc($self->name) . ': Unexpected RR type ' . $rr->type);
+            # Unexpected RR type.
+            # TODO Generate debug info or ignore silently.
         }
     }
     return FALSE;
+}
+
+=item B<explain($server, $request, $result)>
+
+Locally generates an explanation for why the mechanism caused the given result,
+and stores it in the given request object's state.
+
+There is no need to override this method in sub-classes.  See the
+L</explanation_template> method.
+
+=cut
+
+sub explain {
+    my ($self, $server, $request, $result) = @_;
+    my $explanation_template = $self->explanation_template($server, $request, $result);
+    return
+        if not defined($explanation_template);
+    try {
+        my $explanation = Mail::SPF::MacroString->new(
+            text            => $explanation_template,
+            server          => $server,
+            request         => $request,
+            is_explanation  => TRUE
+        );
+        $request->state('local_explanation', $explanation);
+    }
+    catch Mail::SPF::Exception with {}
+    catch Mail::SPF::Result with {};
+    return;
+}
+
+=item B<explanation_template($server, $request, $result)>: returns I<string>
+
+Returns a macro string template for a locally generated explanation for why the
+mechanism caused the given result.
+
+Sub-classes should either define an C<explanation_templates_by_result_code>
+hash constant with their own templates, or override this method.
+
+=cut
+
+sub explanation_template {
+    my ($self, $server, $request, $result) = @_;
+    return undef
+        if not $self->can('explanation_templates_by_result_code');
+    return $self->explanation_templates_by_result_code->{$result->code};
 }
 
 =back
@@ -378,7 +431,7 @@ L<Mail::SPF::Mech::Include>
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>
 
-L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
+L<http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

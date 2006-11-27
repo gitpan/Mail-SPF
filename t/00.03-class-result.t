@@ -4,7 +4,7 @@ use blib;
 
 use Error ':try';
 
-use Test::More tests => 16;
+use Test::More tests => 18;
 
 use Mail::SPF::Request;
 
@@ -17,12 +17,13 @@ BEGIN { use_ok('Mail::SPF::Result') }
 #### Basic Instantiation ####
 
 {
-    my $result = eval { Mail::SPF::Result->new('dummy request', 'result text') };
+    my $result = eval { Mail::SPF::Result->new('dummy server', 'dummy request', 'result text') };
 
     $@ eq '' and isa_ok($result, 'Mail::SPF::Result',   'Basic result object')
         or BAIL_OUT("Basic result instantiation failed: $@");
 
     # Have options been interpreted correctly?
+    is($result->server,             'dummy server',     'Basic result server()');
     is($result->request,            'dummy request',    'Basic result request()');
     is($result->text,               'result text',      'Basic result text()');
 }
@@ -31,7 +32,7 @@ BEGIN { use_ok('Mail::SPF::Result') }
 #### Minimally Parameterized Result ####  XXX Do we need these tests? XXX
 
 {
-    my $result = eval { Mail::SPF::Result->new('dummy request') };
+    my $result = eval { Mail::SPF::Result->new('dummy server', 'dummy request') };
 
     $@ eq '' and isa_ok($result, 'Mail::SPF::Result', 'Minimal result object')
         or BAIL_OUT("Minimal result instantiation failed: $@");
@@ -45,11 +46,12 @@ BEGIN { use_ok('Mail::SPF::Result') }
 
 {
     eval {
-        eval { throw Mail::SPF::Result('request', 'result text') };
-        $@->throw('other request', 'other text');
+        eval { throw Mail::SPF::Result('server', 'request', 'result text') };
+        $@->throw('other server', 'other request', 'other text');
     };
 
     isa_ok($@,                     'Mail::SPF::Result', 'Param-rethrown result object');
+    is($@->server,                  'other server',     'Param-rethrown result server()');
     is($@->request,                 'other request',    'Param-rethrown result request()');
     is($@->text,                    'other text',       'Param-rethrown result text()');
 }
@@ -71,7 +73,7 @@ BEGIN { use_ok('Mail::SPF::Result') }
 #### is_code() ####
 
 {
-    my $result = Mail::SPF::Result::Pass->new('dummy request');
+    my $result = Mail::SPF::Result::Pass->new('dummy server', 'dummy request');
     ok($result->is_code('PaSs'),                        'Result is_code($valid_code)');
     ok((not $result->is_code('foo')),                   'Result is_code($invalid_code)');
 }
@@ -80,7 +82,7 @@ BEGIN { use_ok('Mail::SPF::Result') }
 #### NeutralByDefault, code() ####
 
 {
-    my $result = Mail::SPF::Result::NeutralByDefault->new('dummy request');
+    my $result = Mail::SPF::Result::NeutralByDefault->new('dummy server', 'dummy request');
     isa_ok($result,       'Mail::SPF::Result::Neutral', 'NeutralByDefault result object');
     is($result->code,               'neutral',          'NeutralByDefault result code()');
     ok($result->is_code('neutral'),                     'NeutralByDefault is_code("neutral")');

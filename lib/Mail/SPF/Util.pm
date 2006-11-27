@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Util.pm 25 2006-11-15 15:58:51Z Julian Mehnle $
+# $Id: Util.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -51,7 +51,8 @@ use constant ipv4_mapped_ipv6_address_pattern =>
     $is_v4mapped =
         Mail::SPF::Util->ipv6_address_is_ipv4_mapped($ipv6_address);
     
-    $reverse_name = Mail::SPF::Util->ip_address_reverse($ip_address);
+    $ip_address_string  = Mail::SPF::Util->ip_address_to_string($ip_address);
+    $reverse_name       = Mail::SPF::Util->ip_address_reverse($ip_address);
     
     $validated_domain = Mail::SPF::Util->valid_domain_for_ip_address(
         Mail::SPF::Server->new(),
@@ -147,12 +148,33 @@ sub ipv6_address_is_ipv4_mapped {
     );
 }
 
+=item B<ip_address_to_string($ip_address)>: returns I<string>;
+throws I<Mail::SPF::EInvalidOptionValue>
+
+Returns the given I<NetAddr::IP> IPv4 or IPv6 address compactly formatted as a
+I<string>.  For IPv4 addresses, this is equivalent to calling L< NetAddr::IP's
+C<addr> |NetAddr::IP/addr> method.  For IPv6 addresses, this is equivalent to
+calling L< NetAddr::IP's C<short> |NedAddr::IP/short> method.  Throws a
+I<Mail::SPF::EInvalidOptionValue> exception if the specified object is not a
+I<NetAddr::IP> IPv4 or IPv6 address object.
+
+=cut
+
+sub ip_address_to_string {
+    my ($self, $ip_address) = @_;
+    UNIVERSAL::isa($ip_address, 'NetAddr::IP') and
+    ($ip_address->version == 4 or $ip_address->version == 6)
+        or throw Mail::SPF::EInvalidOptionValue('NetAddr::IP IPv4 or IPv6 address expected');
+    return $ip_address->version == 4 ? $ip_address->addr : lc($ip_address->short);
+}
+
 =item B<ip_address_reverse($ip_address)>: returns I<string>;
 throws I<Mail::SPF::EInvalidOptionValue>
 
 Returns the C<in-addr.arpa.>/C<ip6.arpa.> reverse notation of the given
 I<NetAddr::IP> IPv4 or IPv6 address.  Throws a I<Mail::SPF::EInvalidOptionValue>
-exception if the specified IP address is not an IPv4 or IPv6 address.
+exception if the specified object is not a I<NetAddr::IP> IPv4 or IPv6 address
+object.
 
 =cut
 
@@ -260,8 +282,8 @@ sub valid_domain_for_ip_address {
                         # Silently ignore any of those.
                     }
                     else {
-                        # TODO Generate debug info or ignore silently!
-                        #warn("PTR/$addr_rr_type: unexpected RR type " . $addr_rr->type);
+                        # Unexpected RR type.
+                        # TODO Generate debug info or ignore silently.
                     }
                 }
             }
@@ -287,8 +309,8 @@ sub valid_domain_for_ip_address {
             }
         }
         else {
-            # TODO Generate debug info or ignore silently!
-            #warn('PTR: unexpected RR type ' . $ptr_rr->type);
+            # Unexpected RR type.
+            # TODO Generate debug info or ignore silently.
         }
     }
     

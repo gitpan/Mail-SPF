@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Server.pm 25 2006-11-15 15:58:51Z Julian Mehnle $
+# $Id: Server.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -36,12 +36,12 @@ use constant record_classes_by_version => {
     2   => 'Mail::SPF::v2::Record'
 };
 
-use constant default_max_dns_interactive_terms  => 10;  # RFC 4408, 10.1/6
-use constant default_max_name_lookups_per_term  => 10;  # RFC 4408, 10.1/7
+use constant default_max_dns_interactive_terms      => 10;  # RFC 4408, 10.1/6
+use constant default_max_name_lookups_per_term      => 10;  # RFC 4408, 10.1/7
 sub default_max_name_lookups_per_mx_mech  { shift->max_name_lookups_per_term };
 sub default_max_name_lookups_per_ptr_mech { shift->max_name_lookups_per_term };
 
-use constant default_default_explanation        =>
+use constant default_default_authority_explanation  =>
     'Please see http://www.openspf.org/why.html?sender=%{S}&ip=%{I}&receiver=%{R}';
 
 # Interface:
@@ -52,8 +52,9 @@ use constant default_default_explanation        =>
     use Mail::SPF;
     
     my $spf_server  = Mail::SPF::Server->new(
-        # Optional default explanation:
-        default_explanation => 'See http://www.%{d}/why/s=%{S};i=%{I};r=%{R}'
+        # Optional default for the authority explanation:
+        default_authority_explanation =>
+            'See http://www.%{d}/why/s=%{S};i=%{I};r=%{R}'
     );
     
     my $result      = $spf_server->process($request);
@@ -85,6 +86,20 @@ options:
 
 =over
 
+=item B<default_authority_explanation>
+
+A I<string> denoting the default (not macro-expanded) authority explanation
+string to use if the authority domain does not specify an explanation string of
+its own.  Defaults to:
+
+    'Please see http://www.openspf.org/why.html?sender=%{S}&ip=%{I}&receiver=%{R}'
+
+=item B<hostname>
+
+A I<string> denoting the local system's fully qualified host name that should
+be used for expanding the C<r> macro in explanation strings.  Defaults to the
+system's configured host name.
+
 =item B<dns_resolver>
 
 An optional DNS resolver object.  If none is specified, a new I<Net::DNS::Resolver>
@@ -97,7 +112,7 @@ error, B<undef>.
 =item B<max_dns_interactive_terms>
 
 An I<integer> denoting the maximum number of terms (mechanisms and modifiers)
-per SPF record that perform DNS look-ups, as defined in RFC 4408, 10.1,
+per SPF check that perform DNS look-ups, as defined in RFC 4408, 10.1,
 paragraph 6.  If B<undef> is specified, there is no limit on the number of such
 terms.  Defaults to B<10>, which is the value defined in RFC 4408.
 
@@ -124,13 +139,6 @@ An I<integer> denoting the maximum number of DNS name look-ups per B<mx> or B<pt
 mechanism, respectively.  Defaults to the value of the C<max_name_lookups_per_term>
 option.  See there for additional information and security notes.
 
-=item B<default_explanation>
-
-A I<string> denoting the default (not macro-expanded) explanation string.
-Defaults to:
-
-    'Please see http://www.openspf.org/why.html?sender=%{S}&ip=%{I}&receiver=%{R}'
-
 =back
 
 =cut
@@ -138,6 +146,17 @@ Defaults to:
 sub new {
     my ($self, %options) = @_;
     $self = $self->SUPER::new(%options);
+    
+    $self->{default_authority_explanation} = $self->default_default_authority_explanation
+        if not defined($self->{default_authority_explanation});
+    $self->{default_authority_explanation} = Mail::SPF::MacroString->new(
+        text            => $self->{default_authority_explanation},
+        server          => $self,
+        is_explanation  => TRUE
+    )
+        if not UNIVERSAL::isa($self->{default_authority_explanation}, 'Mail::SPF::MacroString');
+    
+    $self->{hostname} ||= Mail::SPF::Util->hostname;
     
     $self->{dns_resolver} ||= Net::DNS::Resolver->new();
     
@@ -149,15 +168,6 @@ sub new {
                                        if not exists($self->{max_name_lookups_per_mx_mech});
     $self->{max_name_lookups_per_ptr_mech}  = $self->default_max_name_lookups_per_ptr_mech
                                        if not exists($self->{max_name_lookups_per_ptr_mech});
-    
-    $self->{default_explanation} = $self->default_default_explanation
-        if not defined($self->{default_explanation});
-    $self->{default_explanation} = Mail::SPF::MacroString->new(
-        text            => $self->{default_explanation},
-        server          => $self,
-        is_explanation  => TRUE
-    )
-        if not UNIVERSAL::isa($self->{default_explanation}, 'Mail::SPF::MacroString');
     
     return $self;
 }
@@ -217,8 +227,8 @@ Return an appropriate result.
 sub process {
     my ($self, $request) = @_;
     
-    my $explanation = $self->{default_explanation}->new(request => $request);
-    $request->state('explanation', $explanation);
+    my $authority_explanation = $self->{default_authority_explanation}->new(request => $request);
+    $request->state('authority_explanation', $authority_explanation);
     $request->state('dns_interactive_terms_count', 0);
     
     my $result;
@@ -247,7 +257,6 @@ sub process {
         }
         catch Mail::SPF::EDNSTimeout with {
             # FIXME Ignore DNS time-outs on SPF type lookups?
-            #warn('XXX: DNS time-out on SPF RR-type lookup (Server.pm:258)');
             # Apparrently some brain-dead DNS servers time out on SPF-type queries.
         };
         
@@ -273,20 +282,28 @@ sub process {
         }
         
         @records
-            or throw Mail::SPF::Result::None($request,
-                "No acceptable TXT/SPF records available for domain '$domain'");  # RFC 4408, 4.5/7
+            or throw Mail::SPF::Result::None($self, $request,
+                "No applicable sender policy available");  # RFC 4408, 4.5/7
         
         #STDERR->print("DEBUG: Acceptable records:\n");
         #foreach my $record (@records) {
         #    STDERR->print("  $record\n");
         #}
         
-        # TODO Discard all records but the highest acceptable version!
-        #...
-
+        # Discard all records but the highest acceptable version:
+        my $preferred_record_class = $records[0]->class;
+        #STDERR->print("DEBUG: Discarding all non-'$preferred_record_class' records.\n");
+        @records = grep($_->isa($preferred_record_class), @records);
+        
+        #STDERR->print("DEBUG: Acceptable records after discarding:\n");
+        #foreach my $record (@records) {
+        #    STDERR->print("  $record\n");
+        #}
+        
         @records == 1
-            or throw Mail::SPF::Result::PermError($request,
-                "Redundant applicable records found for domain '$domain'");  # RFC 4408, 4.5/6
+            or throw Mail::SPF::Result::PermError($self, $request,
+                "Redundant applicable '" . $preferred_record_class->version_tag . "' " .
+                "sender policies found");  # RFC 4408, 4.5/6
         
         $records[0]->eval($self, $request);
     }
@@ -294,13 +311,13 @@ sub process {
         $result = shift;
     }
     catch Mail::SPF::ESyntaxError with {
-        $result = Mail::SPF::Result::PermError->new($request, shift->text);
+        $result = Mail::SPF::Result::PermError->new($self, $request, shift->text);
     }
     catch Mail::SPF::EProcessingLimitExceeded with {
-        $result = Mail::SPF::Result::PermError->new($request, shift->text);
+        $result = Mail::SPF::Result::PermError->new($self, $request, shift->text);
     }
     catch Mail::SPF::EDNSError with {
-        $result = Mail::SPF::Result::TempError->new($request, shift->text);
+        $result = Mail::SPF::Result::TempError->new($self, $request, shift->text);
     };
     # Propagate other, unknown errors.
     # This should not happen, but if it does, it helps exposing the bug!
@@ -337,13 +354,13 @@ sub dns_lookup {
     # was received (thereby treating NXDOMAIN as an acceptable but empty answer packet):
     $self->dns_resolver->errorstring !~ /^(timeout|query timed out)$/
         or throw Mail::SPF::EDNSTimeout(
-            "Time-out on '$rr_type' DNS lookup of '$domain'");
+            "Time-out on DNS '$rr_type' lookup of '$domain'");
     defined($packet)
         or throw Mail::SPF::EDNSError(
-            "Unknown error on '$rr_type' DNS lookup of '$domain'");
+            "Unknown error on DNS '$rr_type' lookup of '$domain'");
     $packet->header->rcode =~ /^(NOERROR|NXDOMAIN)$/
         or throw Mail::SPF::EDNSError(
-            "'" . $packet->header->rcode . "' error on '$rr_type' DNS lookup of '$domain'");
+            "'" . $packet->header->rcode . "' error on DNS '$rr_type' lookup of '$domain'");
     
     return $packet;
 }
@@ -417,6 +434,17 @@ sub count_dns_interactive_term {
     return;
 }
 
+=item B<default_authority_explanation>: returns I<Mail::SPF::MacroString>
+
+Returns the default authority explanation as a I<MacroString> object.  See the
+description of the L</new> constructor's C<default_authority_explanation>
+option.
+
+=item B<hostname>: returns I<string>
+
+Returns the local system's host name.  See the description of the L</new>
+constructor's C<hostname> option.
+
 =item B<dns_resolver>: returns I<Net::DNS::Resolver> or compatible object
 
 Returns the DNS resolver object of the server object.  See the description of
@@ -433,24 +461,20 @@ the L</new> constructor's C<dns_resolver> option.
 Return the limit values of the server object.  See the description of the
 L</new> constructor's corresponding options.
 
-=item B<default_explanation>: returns I<Mail::SPF::MacroString>
-
-Returns the default explanation as a I<MacroString> object.  See the
-description of the L</new> constructor's C<default_explanation> option.
-
 =cut
 
 # Make read-only accessors:
 __PACKAGE__->make_accessor($_, TRUE)
     foreach qw(
+        default_authority_explanation
+        hostname
+        
         dns_resolver
         
         max_dns_interactive_terms
         max_name_lookups_per_term
         max_name_lookups_per_mx_mech
         max_name_lookups_per_ptr_mech
-        
-        default_explanation
     );
 
 =back
@@ -459,7 +483,7 @@ __PACKAGE__->make_accessor($_, TRUE)
 
 L<Mail::SPF>, L<Mail::SPF::Request>, L<Mail::SPF::Result>
 
-L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
+L<http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

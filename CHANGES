@@ -4,16 +4,21 @@
 #   ! = Changed something significant, or removed a feature
 #   * = Fixed a bug, or made a minor improvement
 
---- 2.000_002 (2006-11-15 02:00)
+--- 2.000_003 (2006-11-27 20:00)
 
   > Pre-release.
   > Major overhaul:
-    ! Major code refactoring.
+    ! Major code refactoring, achieving full RFC 4408/4406 compliance.
     ! Switched from EU::MM to Module::Build.
-    + Added Debian package control files.
+    + Added complete rewrites of spfquery (2.500) and spfd (2.000).
     + Added complete documentation.
-    + Added unit tests.
+    + Added unit tests and the RFC 4408 test-suite.
+    + Added Debian package control files.
     + And more...
+
+--- 2.000_002 (2006-11-15 02:00)
+
+  > Pre-release.
 
 --- 2.000_001 (2006-11-04 23:45)
 
@@ -21,5 +26,5 @@
 
 --- 2.000 (initial release) (2005-06-23 00:00)
 
-# $Id: CHANGES 23 2006-11-15 03:37:03Z Julian Mehnle $
+# $Id: CHANGES 31 2006-11-27 20:11:01Z Julian Mehnle $
 # vim:tw=79 sts=2 sw=2

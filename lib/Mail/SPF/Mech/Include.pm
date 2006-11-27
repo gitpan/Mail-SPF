@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Include.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
+# $Id: Include.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -135,13 +135,13 @@ domain.  The result of the recursive SPF check is translated as follows:
 
      Recursive result | Effect
     ------------------+-----------------
-     Pass             | return true
-     Fail             | return false
-     SoftFail         | return false
-     Neutral          | return false
-     None             | throw PermError
-     PermError        | throw PermError
-     TempError        | throw TempError
+     pass             | return true
+     fail             | return false
+     softfail         | return false
+     neutral          | return false
+     none             | throw PermError
+     permerror        | throw PermError
+     temperror        | throw TempError
 
 See RFC 4408, 5.2, for the exact algorithm used.
 
@@ -155,9 +155,6 @@ sub match {
     # Create sub-request with mutated authority domain:
     my $authority_domain = $self->domain($server, $request);
     my $sub_request = $request->new_sub_request(authority_domain => $authority_domain);
-    # FIXME Do we need to copy the current request's explanation to the sub-request? (RFC 4408, 6.2/13)
-    #$sub_request->state('explanation') = $request->state('explanation');
-        # FIXME It would not work this way anyway, because Mail::SPF::Server::process() overrides it! (Change?)
     # Process sub-request:
     my $result = $server->process($sub_request);
     
@@ -171,12 +168,12 @@ sub match {
         or $result->isa('Mail::SPF::Result::SoftFail')
         or $result->isa('Mail::SPF::Result::Neutral');
     
-    throw Mail::SPF::Result::PermError($request,
-        "Included domain '$authority_domain' has no sender policy")
+    throw Mail::SPF::Result::PermError($server, $request,
+        "Included domain '$authority_domain' has no applicable sender policy")
         if $result->isa('Mail::SPF::Result::None');
     
     # Propagate any other results (including {Perm,Temp}Error) as-is:
-    $result->throw($request);
+    $result->throw();
 }
 
 =back
@@ -185,7 +182,7 @@ sub match {
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>, L<Mail::SPF::Mech>
 
-L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
+L<http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

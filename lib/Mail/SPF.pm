@@ -5,7 +5,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: SPF.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
+# $Id: SPF.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -17,11 +17,11 @@ Mail::SPF - An object-oriented implementation of Sender Policy Framework
 
 =head1 VERSION
 
-2.000_002
+2.000_003
 
 =cut
 
-use version; our $VERSION = qv('2.000_002');
+use version; our $VERSION = qv('2.000_003');
 
 use warnings;
 use strict;
@@ -48,6 +48,13 @@ use constant FALSE  => not TRUE;
     );
     
     my $result      = $spf->process($request);
+    
+    print("$result\n");
+    my $result_code     = $result->code;        # 'pass', 'fail', etc.
+    my $local_exp       = $result->local_explanation;
+    my $authority_exp   = $result->authority_explanation
+        if $result->is_code('fail');
+    my $spf_header      = $result->received_spf_header;
 
 =head1 DESCRIPTION
 
@@ -75,8 +82,7 @@ L<http://www.openspf.org>
 
 =item The SPFv1 specification (RFC 4408)
 
-L<http://new.openspf.org/Specifications>
-L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://new.openspf.org/Specifications>, L<http://www.ietf.org/rfc/rfc4408.txt>
 
 =back
 

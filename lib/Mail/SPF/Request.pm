@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Request.pm 25 2006-11-15 15:58:51Z Julian Mehnle $
+# $Id: Request.pm 28 2006-11-19 20:58:45Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -129,7 +129,7 @@ records do not cover the PRA scope.
 
 =item B<scope>
 
-A string denoting the authorization scope against which the identity should be
+A string denoting the authorization scope of the identity that should be
 checked.  Defaults to B<'mfrom'>.  The following scope values are supported:
 
 =over
@@ -171,17 +171,17 @@ I<Required>.  A string denoting the sender identity whose authorization should
 be checked.  This is a domain name for the C<helo> scope, and an e-mail address
 for the C<mfrom> and C<pra> scopes.
 
-I<Note>:  For checks against the C<mfrom> scope, in the case of an empty C<MAIL
+I<Note>:  For checks with the C<mfrom> scope, in the case of an empty C<MAIL
 FROM> SMTP transaction parameter, the caller must provide to Mail::SPF::Request
 the C<HELO> transaction parameter instead.
 
 =item B<ip_address>
 
-I<Required> for checks against the C<helo>, C<mfrom>, and C<pra> scopes.
-Either a string or a I<NetAddr::IP> object denoting the IP address of the host
-claiming the identity that is being checked.  Can be either an IPv4 or an IPv6
-address.  An IPv4-mapped IPv6 address (e.g. '::ffff:192.168.0.1') is treated
-as an IPv4 address.
+I<Required> for checks with the C<helo>, C<mfrom>, and C<pra> scopes.  Either a
+string or a I<NetAddr::IP> object denoting the IP address of the host claiming
+the identity that is being checked.  Can be either an IPv4 or an IPv6 address.
+An IPv4-mapped IPv6 address (e.g. '::ffff:192.168.0.1') is treated as an IPv4
+address.
 
 =item B<helo_identity>
 
@@ -451,7 +451,7 @@ sub state :lvalue {
 
 L<Mail::SPF>, L<Mail::SPF::Server>
 
-L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
+L<http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

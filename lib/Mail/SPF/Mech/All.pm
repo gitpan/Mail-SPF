@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: All.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
+# $Id: All.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -26,6 +26,13 @@ use constant FALSE  => not TRUE;
 
 use constant name           => 'all';
 use constant name_pattern   => qr/${\name}/i;
+
+use constant explanation_templates_by_result_code => {
+    %{__PACKAGE__->SUPER::explanation_templates_by_result_code},
+    pass        => "Sender is authorized by default to use '%{s}' in '%{_scope}' identity",
+    fail        => "Sender is not authorized by default to use '%{s}' in '%{_scope}' identity",
+    softfail    => "Sender is not authorized by default to use '%{s}' in '%{_scope}' identity, however domain is not currently prepared for false failures",
+};
 
 =head1 DESCRIPTION
 
@@ -123,7 +130,7 @@ sub match {
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>, L<Mail::SPF::Mech>
 
-L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
+L<http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

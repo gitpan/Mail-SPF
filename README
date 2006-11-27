@@ -1,4 +1,4 @@
-Mail::SPF 2.000_002 -- A Perl implementation of the Sender Policy Framework
+Mail::SPF 2.000_003 -- A Perl implementation of the Sender Policy Framework
 (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
     2005      Shevek <cpan@anarres.org>
 <http://search.cpan.org/dist/Mail-SPF>
@@ -8,6 +8,11 @@ Mail::SPF is an object-oriented Perl implementation of the Sender Policy
 Framework (SPF) e-mail sender authentication system.
 
 See <http://www.openspf.org> for more information about SPF.
+
+The Mail::SPF source package includes the following additional tools:
+
+  * spfquery:  A command-line tool for performing SPF checks.
+  * spfd:      A daemon for services that perform SPF checks frequently.
 
 Reporting Bugs
 --------------
@@ -21,5 +26,5 @@ License
 Mail::SPF is free software.  You may use, modify, and distribute it under the
 terms of the BSD license.  See LICENSE for the BSD license text.
 
-# $Id: README 23 2006-11-15 03:37:03Z Julian Mehnle $
+# $Id: README 28 2006-11-19 20:58:45Z Julian Mehnle $
 # vim:tw=79

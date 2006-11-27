@@ -1,6 +1,6 @@
 ---
 name: Mail-SPF
-version: 2.000_002
+version: 2.000_003
 author:
   - 'Julian Mehnle <julian@mehnle.net>'
   - 'Shevek <cpan@anarres.org>'
@@ -8,6 +8,7 @@ abstract: An object-oriented implementation of Sender Policy Framework
 license: bsd
 requires:
   Error: 0
+  Getopt::Long: 0
   Net::DNS: 0.58
   NetAddr::IP: 4.0
   URI: 1.13
@@ -20,7 +21,7 @@ build_requires:
 provides:
   Mail::SPF:
     file: lib/Mail/SPF.pm
-    version: 2.000_002
+    version: 2.000_003
   Mail::SPF::Base:
     file: lib/Mail/SPF/Base.pm
   Mail::SPF::EAbstractClass:
@@ -141,6 +142,8 @@ provides:
     file: lib/Mail/SPF/Result.pm
   Mail::SPF::Result::TempError:
     file: lib/Mail/SPF/Result.pm
+  Mail::SPF::SenderIPAddrMech:
+    file: lib/Mail/SPF/SenderIPAddrMech.pm
   Mail::SPF::Server:
     file: lib/Mail/SPF/Server.pm
   Mail::SPF::Term:

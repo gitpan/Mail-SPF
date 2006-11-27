@@ -3,7 +3,7 @@
 # SPF result class.
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
-# $Id: Result.pm 25 2006-11-15 15:58:51Z Julian Mehnle $
+# $Id: Result.pm 32 2006-11-27 20:16:03Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -22,6 +22,10 @@ use base 'Error', 'Mail::SPF::Base';
     # An SPF result is not really a code exception in ideology, but in form.
     # The Error base class fits our purpose, anyway.
 
+use Mail::SPF::Util;
+
+use Error ':try';
+
 use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;
 
@@ -35,6 +39,18 @@ use constant result_classes_by_code => {
     permerror   => 'Mail::SPF::Result::PermError',
     temperror   => 'Mail::SPF::Result::TempError'
 };
+
+use constant received_spf_header_identity_key_names_by_scope => {
+    helo        => 'helo',
+    mfrom       => 'envelope-from',
+    pra         => 'pra'
+};
+
+use constant atext_pattern              => qr/[\p{IsAlnum}!#\$%&'*+\-\/=?^_`{|}~]/;
+
+use constant dot_atom_pattern           => qr/
+    (${\atext_pattern})+ ( \. (${\atext_pattern})+ )*
+/x;
 
 # Interface:
 ##############################################################################
@@ -53,10 +69,10 @@ and its derivatives, see below.
     
     sub foo {
         if (...) {
-            throw Mail::SPF::Result::Pass($request);
+            throw Mail::SPF::Result::Pass($server, $request);
         }
         else {
-            throw Mail::SPF;;Result::PermError($request, 'Invalid foo');
+            throw Mail::SPF::Result::PermError($server, $request, 'Invalid foo');
         }
     }
 
@@ -71,10 +87,17 @@ and its derivatives, see below.
     }
     catch Mail::SPF::Result with {
         my ($result) = @_;
-        my $code     = $result->code;
-        my $request  = $result->request;
-        my $text     = $result->text;
+        ...
     };
+
+=head2 Using results
+
+    my $result_code     = $result->code;
+    my $request         = $result->request;
+    my $local_exp       = $result->local_explanation;
+    my $authority_exp   = $result->authority_explanation
+        if $result->is_code('fail');
+    my $spf_header      = $result->received_spf_header;
 
 =cut
 
@@ -98,12 +121,13 @@ The following constructor is provided:
 
 =over
 
-=item B<new($request)>: returns I<Mail::SPF::Result>
+=item B<new($server, $request)>: returns I<Mail::SPF::Result>
 
-=item B<new($request, $text)>: returns I<Mail::SPF::Result>
+=item B<new($server, $request, $text)>: returns I<Mail::SPF::Result>
 
-Creates a new SPF result object and associates the given I<Mail::SPF::Request>
-object with it.  An optional result text may be specified.
+Creates a new SPF result object and associates the given I<Mail::SPF::Server>
+and I<Mail::SPF::Request> objects with it.  An optional result text may be
+specified.
 
 =cut
 
@@ -118,6 +142,9 @@ sub new {
         :   $self->SUPER::new();            # Class:  create new result object.
     
     # Set/override fields:
+    $self->{server}  = shift(@args) if @args;
+    defined($self->{server})
+        or throw Mail::SPF::EOptionRequired('Mail::SPF server object required');
     $self->{request} = shift(@args) if @args;
     defined($self->{request})
         or throw Mail::SPF::EOptionRequired('Request object required');
@@ -134,12 +161,13 @@ The following class methods are provided:
 
 =over
 
-=item B<throw($request)>: throws I<Mail::SPF::Result>
+=item B<throw($server, $request)>: throws I<Mail::SPF::Result>
 
-=item B<throw($request, $text)>: throws I<Mail::SPF::Result>
+=item B<throw($server, $request, $text)>: throws I<Mail::SPF::Result>
 
-Throws a new SPF result object, associating the given I<Mail::SPF::Request>
-with it.  An optional result text may be specified.
+Throws a new SPF result object, associating the given I<Mail::SPF::Server> and
+I<Mail::SPF::Request> objects with it.  An optional result text may be
+specified.
 
 =cut
 
@@ -147,6 +175,7 @@ sub throw {
     my ($self, @args) = @_;
     local $Error::Depth = $Error::Depth + 1;
     $self = $self->new(@args);
+        # Always create/clone a new result object, not just when throwing for the first time!
     die($Error::THROWN = $self);
 }
 
@@ -211,18 +240,22 @@ The following instance methods are provided:
 
 =item B<throw>: throws I<Mail::SPF::Result>
 
-=item B<throw($request)>: throws I<Mail::SPF::Result>
+=item B<throw($server, $request)>: throws I<Mail::SPF::Result>
 
-=item B<throw($request, $text)>: throws I<Mail::SPF::Result>
+=item B<throw($server, $request, $text)>: throws I<Mail::SPF::Result>
 
-Re-throws an existing SPF result object.  If a I<Mail::SPF::Request> object is
-specified, associates it with the result object, replacing the prior request
-object.  If a result text is specified as well, overrides the prior result
-text.
+Re-throws an existing SPF result object.  If I<Mail::SPF::Server> and
+I<Mail::SPF::Request> objects are specified, associates them with the result
+object, replacing the prior server and request objects.  If a result text is
+specified as well, overrides the prior result text.
 
 =item B<code>: returns I<string>
 
 Returns the result code of the result object.
+
+=item B<server>: returns I<Mail::SPF::Server>
+
+Returns the Mail::SPF server object that produced the result at hand.
 
 =item B<request>: returns I<Mail::SPF::Request>
 
@@ -230,8 +263,9 @@ Returns the SPF request that led to the result at hand.
 
 =cut
 
-# Read-only accessor:
-__PACKAGE__->make_accessor('request', TRUE);
+# Read-only accessors:
+__PACKAGE__->make_accessor($_, TRUE)
+    foreach qw(server request);
 
 =item B<text>: returns I<string>
 
@@ -248,6 +282,85 @@ L</OVERLOADING>.
 sub stringify {
     my ($self) = @_;
     return sprintf("%s (%s)", $self->name, $self->SUPER::stringify);
+}
+
+=item B<local_explanation>: returns I<string>; throws I<Mail::SPF::EDNSError>,
+I<Mail::SPF::EInvalidMacroString>
+
+Returns a locally generated explanation for the result.
+
+=cut
+
+sub local_explanation {
+    my ($self) = @_;
+    my $local_explanation = $self->{local_explanation};
+    
+    return $local_explanation
+        if defined($local_explanation);
+    
+    # Prepare local explanation:
+    my $request = $self->{request};
+    $local_explanation = $request->state('local_explanation');
+    if (defined($local_explanation)) {
+        $local_explanation = sprintf("%s (%s)", $local_explanation->expand, lcfirst($self->text));
+    }
+    else {
+        $local_explanation = $self->text;
+    }
+    
+    # Resolve authority domains of root-request and bottom sub-request:
+    my $root_request = $request->root_request;
+    $local_explanation =
+        $request == $root_request ?
+            sprintf("%s: %s", $request->authority_domain, $local_explanation)
+        :   sprintf("%s ... %s: %s",
+                $root_request->authority_domain, $request->authority_domain, $local_explanation);
+    
+    return $self->{local_explanation} = $local_explanation;
+}
+
+=item B<received_spf_header>: returns I<string>
+
+Returns a string containing an appropriate C<Received-SPF> header field for the
+result object.  The header field is not line-wrapped and contains no trailing
+newline character.
+
+=cut
+
+sub received_spf_header {
+    my ($self) = @_;
+    return $self->{received_spf_header}
+        if defined($self->{received_spf_header});
+    my $identity_key_name =
+        $self->received_spf_header_identity_key_names_by_scope->{$self->{request}->scope};
+    my @info_pairs = (
+        receiver            => $self->{server}->hostname,
+        identity            => $self->{request}->scope,
+        $identity_key_name  => $self->{request}->identity,
+        (
+            ($self->{request}->scope ne 'helo' and defined($self->{request}->helo_identity)) ?
+                (helo       => $self->{request}->helo_identity)
+            :   ()
+        ),
+        'client-ip'         => Mail::SPF::Util->ip_address_to_string($self->{request}->ip_address)
+    );
+    my $info_string;
+    while (@info_pairs) {
+        my $key   = shift(@info_pairs);
+        my $value = shift(@info_pairs);
+        $info_string .= '; ' if defined($info_string);
+        if ($value !~ /^${\dot_atom_pattern}$/o) {
+            $value =~ s/(["\\])/\\$1/g;   # Escape '\' and '"' characters.
+            $value = '"' . $value . '"';  # Double-quote value.
+        }
+        $info_string .= "$key=$value";
+    }
+    return $self->{received_spf_header} = sprintf(
+        "Received-SPF: %s (%s) %s",
+        $self->code,
+        $self->local_explanation,
+        $info_string
+    );
 }
 
 =back
@@ -271,11 +384,13 @@ The following additional instance method is provided:
 
 =over
 
-=item B<explanation>: returns I<string>
+=item B<authority_explanation>: returns I<string>; throws I<Mail::SPF::EDNSError>,
+I<Mail::SPF::EInvalidMacroString>
 
-Returns the explanation string for the C<fail> result.  Be aware that the
-explanation is provided by a potentially malicious party and thus should not be
-trusted.  See RFC 4408, 10.5, for a more detailed discussion of this issue.
+Returns the authority domain's explanation for the result.  Be aware that the
+authority domain may be a malicious party and thus the authority explanation
+should not be trusted blindly.  See RFC 4408, 10.5, for a detailed discussion
+of this issue.
 
 =back
 
@@ -311,22 +426,21 @@ use constant code => 'pass';
 
 package Mail::SPF::Result::Fail;
 our @ISA = 'Mail::SPF::Result';
-
-use constant TRUE   => (0 == 0);
-use constant FALSE  => not TRUE;
-
+use Error ':try';
+use Mail::SPF::Exception;
 use constant code => 'fail';
 
-sub new {
-    my ($self, @args) = @_;
-    local $Error::Depth = $Error::Depth + 1;
-    $self = $self->SUPER::new(@args);
-    $self->{explanation} = $self->{request}->state('explanation')->expand;
-    return $self;
+sub authority_explanation {
+    my ($self) = @_;
+    return $self->{authority_explanation}
+        if defined($self->{authority_explanation});
+    try {
+        $self->{authority_explanation} = $self->{request}->state('authority_explanation')->expand;
+    }
+    catch Mail::SPF::EInvalidMacroString with {};
+        # Ignore expansion errors and leave authority expansion undefined.
+    return $self->{authority_explanation};
 }
-
-# Read-only accessor:
-__PACKAGE__->make_accessor('explanation', TRUE);
 
 package Mail::SPF::Result::SoftFail;
 our @ISA = 'Mail::SPF::Result';
@@ -363,7 +477,7 @@ use constant code => 'temperror';
 
 L<Mail::SPF>, L<Mail::SPF::Server>, L<Error>, L<perlfunc/eval>
 
-L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
+L<http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Record.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
+# $Id: Record.pm 28 2006-11-19 20:58:45Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -170,7 +170,7 @@ Returns B<'v=spf1'>.
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>, L<Mail::SPF::Mech>,
 L<Mail::SPF::Mod>
 
-L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
+L<http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

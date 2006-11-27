@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: MX.pm 25 2006-11-15 15:58:51Z Julian Mehnle $
+# $Id: MX.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -19,7 +19,7 @@ Mail::SPF::Mech::MX - SPF record C<mx> mechanism class
 use warnings;
 use strict;
 
-use base 'Mail::SPF::Mech';
+use base 'Mail::SPF::SenderIPAddrMech';
 
 use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;
@@ -179,7 +179,7 @@ sub match {
     @mx_rrs = splice(@mx_rrs, 0, $server->max_name_lookups_per_mx_mech)
         if defined($server->max_name_lookups_per_mx_mech);
     
-    # TODO Use A records from packet's "additional" section? Probably not.
+    # TODO Use A records from packet's "additional" section?  Probably not.
     
     # Check MX records:
     foreach my $rr (@mx_rrs) {
@@ -188,8 +188,8 @@ sub match {
                 if $self->match_in_domain($server, $request, $rr->exchange);
         }
         else {
-            # TODO Generate debug info or ignore silently!
-            #warn('MX: Unexpected RR type ' . $rr->type);
+            # Unexpected RR type.
+            # TODO Generate debug info or ignore silently.
         }
     }
     
@@ -202,7 +202,7 @@ sub match {
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>, L<Mail::SPF::Mech>
 
-L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
+L<http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

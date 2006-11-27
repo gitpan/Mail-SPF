@@ -6,7 +6,7 @@ ifndef PERL
     PERL = /usr/bin/perl
 endif
 
-TMP = $(CURDIR)/debian/$(PACKAGE)
+TMP = $(CURDIR)/debian/tmp
 
 BUILD = ./Build
 
@@ -33,8 +33,8 @@ install-stamp: build-stamp
 	$(BUILD) install destdir=$(TMP)
 	
 	# Manually create manpage for sbin/ executables:
-	#mkdir -p $(TMP)/usr/share/man/man8
-	#pod2man -s8p sbin/spfd           $(TMP)/usr/share/man/man8/spfd.8p
+	mkdir -p $(TMP)/usr/share/man/man8
+	pod2man -s8p sbin/spfd           $(TMP)/usr/share/man/man8/spfd.8p
 	
 	touch install-stamp
 
@@ -43,9 +43,11 @@ binary-indep: build install
 	dh_testdir
 	dh_testroot
 	
-	dh_install
+	dh_install --sourcedir=$(TMP)
 	dh_installdirs
-	dh_installdocs README TODO
+	dh_installdocs -A README TODO
+	#dh_installdocs -p libmail-spf-perl README TODO
+	#dh_installdocs -p spf-tools-perl   README TODO
 	dh_installchangelogs CHANGES
 	dh_installexamples #examples/*
 	#dh_installman

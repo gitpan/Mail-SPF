@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Exp.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
+# $Id: Exp.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -24,6 +24,7 @@ use base 'Mail::SPF::GlobalMod';
 
 use Error ':try';
 
+use Mail::SPF::Result;
 use Mail::SPF::MacroString;
 
 use constant TRUE   => (0 == 0);
@@ -117,10 +118,11 @@ __PACKAGE__->make_accessor('domain_spec', TRUE);
 
 =item B<process($server, $request, $result)>
 
-If the given SPF result is a C<fail> result, retrieves an explanation string
-from the modifier's target domain and attaches it to the SPF result.  If an
-error occurs during the retrieval of the explanation string, does nothing, as
-if the modifier was not present.  See RFC 4408, 6.2, for details.
+If the given SPF result is a C<fail> result, retrieves the authority domain's
+explanation string from the modifier's target domain and attaches it to the SPF
+result.  If an error occurs during the retrieval of the explanation string,
+does nothing, as if the modifier was not present.  See RFC 4408, 6.2, for
+details.
 
 =cut
 
@@ -132,18 +134,18 @@ sub process {
         my $txt_packet = $server->dns_lookup($exp_domain, 'TXT');
         my @txt_rrs = grep($_->type eq 'TXT', $txt_packet->answer);
         @txt_rrs > 0
-            or throw Mail::SPF::Result::PermError($request,
-                "No explanation string available at domain '$exp_domain'");  # RFC 4408, 6.2/4
+            or throw Mail::SPF::Result::PermError($server, $request,
+                "No authority explanation string available at domain '$exp_domain'");  # RFC 4408, 6.2/4
         @txt_rrs == 1
-            or throw Mail::SPF::Result::PermError($request,
-                "Redundant explanation strings found at domain '$exp_domain'");  # RFC 4408, 6.2/4
+            or throw Mail::SPF::Result::PermError($server, $request,
+                "Redundant authority explanation strings found at domain '$exp_domain'");  # RFC 4408, 6.2/4
         my $explanation = Mail::SPF::MacroString->new(
             text            => join('', $txt_rrs[0]->char_str_list),
             server          => $server,
             request         => $request,
             is_explanation  => TRUE
         );
-        $request->state('explanation', $explanation);
+        $request->state('authority_explanation', $explanation);
     }
     # Ignore DNS and other errors:
     catch Mail::SPF::EDNSError with {}
@@ -160,7 +162,7 @@ See L<Mail::SPF::Mod> for other supported instance methods.
 
 L<Mail::SPF>, L<Mail::SPF::Mod>, L<Mail::SPF::Term>, L<Mail::SPF::Record>
 
-L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
+L<http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

@@ -2,7 +2,7 @@
 # Module::Build build script for Mail::SPF
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
-# $Id$
+# $Id: Build.PL 28 2006-11-19 20:58:45Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -35,7 +35,7 @@ my $class = Module::Build->subclass( code => <<'EOF' );
         );
     }
     
-#    sub process_sbin_files    { shift->process_extra_files('sbin')    }
+    sub process_sbin_files    { shift->process_extra_files('sbin')    }
 
 EOF
 
@@ -50,7 +50,7 @@ my $build = $class->new(
         # Core requirements:
         perl            => '5.006',
         version         => 0,
-#        Getopt::Long    => 0,
+        Getopt::Long    => 0,
         Error           => 0,
         NetAddr::IP     => '4.0',
         Net::DNS        => '0.58',
@@ -65,15 +65,18 @@ my $build = $class->new(
         Net::DNS::Resolver::Programmable
                         => qv('0.002.1')->numify,
     },
+    script_files    => [
+        'bin/spfquery'
+    ],
     install_path    => {
-#        'sbin'          => '/usr/sbin'
+        'sbin'          => '/usr/sbin'
     },
     create_makefile_pl
                     => 'passthrough',
     sign            => 1
 );
 
-#$build->add_build_element($_)
-#    foreach qw(sbin);
+$build->add_build_element($_)
+    foreach qw(sbin);
 
 $build->create_build_script();

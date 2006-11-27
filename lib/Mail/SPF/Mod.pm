@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Mod.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
+# $Id: Mod.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -132,7 +132,7 @@ sub parse_name {
 
 sub parse_params {
     my ($self, $required) = @_;
-    # Parse generic macro-string of parameters text (should be overridden in sub-classes):
+    # Parse generic macro string of parameters text (should be overridden in sub-classes):
     if ($self->{parse_text} =~ s/^(${\$self->macro_string_pattern})$//) {
         $self->{params_text} = $1;
     }
@@ -346,7 +346,7 @@ L<Mail::SPF::GlobalMod>, L<Mail::SPF::PositionalMod>
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>
 
-L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
+L<http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

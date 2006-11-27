@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: MacroString.pm 25 2006-11-15 15:58:51Z Julian Mehnle $
+# $Id: MacroString.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -120,7 +120,7 @@ it can be specified dynamically when calling the C<expand> method.
 
 A I<boolean> denoting whether the macro string is an explanation string
 obtained via an C<exp> modifier.  If B<true>, the C<c>, C<r>, and C<t> macros
-may appear in the macro string, otherwise they may not and a
+may appear in the macro string, otherwise they may not, and if they do, a
 I<Mail::SPF::EInvalidMacro> exception will be thrown when the macro string is
 expanded.  Defaults to B<false>.
 
@@ -170,10 +170,10 @@ sub context {
 }
 
 =item B<expand>: returns I<string>;
-throws I<Mail::SPF::EMacroExpansionCtxRequired>;
+throws I<Mail::SPF::EMacroExpansionCtxRequired>, I<Mail::SPF::EInvalidMacroString>, I<Mail::SPF::Result::PermError>
 
 =item B<expand($server, $request)>: returns I<string>;
-throws I<Mail::SPF::EMacroExpansionCtxRequired>
+throws I<Mail::SPF::EMacroExpansionCtxRequired>, I<Mail::SPF::EInvalidMacroString>, I<Mail::SPF::Result::PermError>
 
 Expands the text of the macro string using either the context specified through
 an earlier call to the C<context()> method, or the given context, and returns
@@ -206,7 +206,7 @@ sub expand {
         my $pos = pos($text) - 2;
         
         if ($key eq '{') {
-            if ($text =~ m/ \G (\w) ([0-9]+)? (r)? ([.\-+,\/_=])? } /cgx) {
+            if ($text =~ m/ \G (\w|_\p{IsAlpha}+) ([0-9]+)? (r)? ([.\-+,\/_=])? } /cgx) {
                 my ($char, $rh_parts, $reverse, $delimiter) = ($1, $2, $3, $4);
                 
                 # Upper-case macro chars trigger URL-escaping AKA percent-encoding
@@ -240,7 +240,7 @@ sub expand {
                     }
                     else {
                         # Unexpected IP address version.
-                        throw Mail::SPF::Result::PermError($request,
+                        throw Mail::SPF::Result::PermError($server, $request,
                             "Unexpected IP address version '$ip_address_version' in request");
                     }
                 }
@@ -264,7 +264,7 @@ sub expand {
                     }
                     else {
                         # Unexpected IP address version.
-                        throw Mail::SPF::Result::PermError($request,
+                        throw Mail::SPF::Result::PermError($server, $request,
                             "Unexpected IP address version '$ip_address_version' in request");
                     }
                 }
@@ -274,39 +274,32 @@ sub expand {
                 elsif ($char eq 'c') {  # RFC 4408, 8.1/20, 8.1/21
                     $self->{is_explanation}
                         or throw Mail::SPF::EInvalidMacro(
-                                "Illegal 'c' macro encountered at pos $pos in non-explanation macro string");
+                                "Illegal 'c' macro in non-explanation macro string '$text'");
                     my $ip_address = $request->ip_address;
                     $ip_address = Mail::SPF::Util->ipv6_address_to_ipv4($ip_address)
                         if Mail::SPF::Util->ipv6_address_is_ipv4_mapped($ip_address);
-                    my $ip_address_version = $ip_address->version;
-                    if ($ip_address_version == 4) {
-                        $value = $ip_address->addr;
-                    }
-                    elsif ($ip_address_version == 6) {
-                        $value = $ip_address->short;
-                    }
-                    else {
-                        # Unexpected IP address version.
-                        throw Mail::SPF::Result::PermError($request,
-                            "Unexpected IP address version '$ip_address_version' in request");
-                    }
+                    $value = Mail::SPF::Util->ip_address_to_string($ip_address);
                 }
                 elsif ($char eq 'r') {  # RFC 4408, 8.1/23
                     $self->{is_explanation}
                         or throw Mail::SPF::EInvalidMacro(
-                                "Illegal 'r' macro encountered at pos $pos in non-explanation macro string");
-                    $value = Mail::SPF::Util->hostname || 'unknown';
+                                "Illegal 'r' macro in non-explanation macro string '$text'");
+                    $value = $server->hostname || 'unknown';
                 }
                 elsif ($char eq 't') {  # RFC 4408, 8.1/24
                     $self->{is_explanation}
                         or throw Mail::SPF::EInvalidMacro(
-                                "Illegal 't' macro encountered at pos $pos in non-explanation macro string");
+                                "Illegal 't' macro in non-explanation macro string '$text'");
                     $value = $^O ne 'MacOS' ? time() : time() + $self->macos_epoch_offset;
+                }
+                elsif ($char eq '_scope') {
+                    # Scope pseudo macro for internal use only!
+                    $value = $request->scope;
                 }
                 else {
                     # Unknown macro character.
                     throw Mail::SPF::EInvalidMacro(
-                        "Unknown macro character '$char' at pos $pos in macro string");
+                        "Unknown macro character '$char' at pos $pos in macro string '$text'");
                 }
                 
                 if (defined($rh_parts) or defined($reverse)) {
@@ -320,8 +313,7 @@ sub expand {
                     }
                     if (defined($rh_parts) and $rh_parts == 0) {
                         throw Mail::SPF::EInvalidMacro(
-                            "Illegal selection of 0 (zero) right-hand parts " .
-                            "at pos $pos in macro string");
+                            "Illegal selection of 0 (zero) right-hand parts at pos $pos in macro string '$text'");
                     }
                     
                     $value = join($self->default_delimiter, @list);
@@ -336,7 +328,8 @@ sub expand {
             }
             else {
                 # Invalid macro expression.
-                throw Mail::SPF::EInvalidMacro("Invalid macro expression at pos $pos in macro string");
+                throw Mail::SPF::EInvalidMacro(
+                    "Invalid macro expression at pos $pos in macro string '$text'");
             }
         }
         elsif ($key eq '-') {
@@ -350,7 +343,8 @@ sub expand {
         }
         else {
             # Invalid macro expression.
-            throw Mail::SPF::EInvalidMacro("Invalid macro expression at pos $pos in macro string");
+            throw Mail::SPF::EInvalidMacro(
+                "Invalid macro expression at pos $pos in macro string '$text'");
         }
     }
     
@@ -415,7 +409,7 @@ method is used to convert the object into a string.
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Server>, L<Mail::SPF::Request>
 
-L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
+L<http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

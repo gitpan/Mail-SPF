@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Redirect.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
+# $Id: Redirect.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -141,14 +141,15 @@ sub process {
     $result = $server->process($sub_request);
     
     # Translate result of sub-request (RFC 4408, 6.1/4):
-    throw Mail::SPF::Result::PermError($request,
-        "Redirect domain '$authority_domain' has no sender policy")
+    throw Mail::SPF::Result::PermError($server, $request,
+        "Redirect domain '$authority_domain' has no applicable sender policy")
         if $result->isa('Mail::SPF::Result::None');
     
     # Propagate any other results as-is:
-    $request->state('explanation') = $sub_request->state('explanation');
-        # Propagate result explanation from sub-request.
-    $result->throw($request);
+    #$request->state('authority_explanation') = $sub_request->state('authority_explanation');
+    #    # Propagate authority result explanation from sub-request.
+    #    # FIXME Needed?  Seems not!  See TODO file.
+    $result->throw();
 }
 
 =back
@@ -159,7 +160,7 @@ See L<Mail::SPF::Mod> for other supported instance methods.
 
 L<Mail::SPF>, L<Mail::SPF::Mod>, L<Mail::SPF::Term>, L<Mail::SPF::Record>
 
-L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
+L<http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

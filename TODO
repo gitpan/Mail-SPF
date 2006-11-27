@@ -4,80 +4,39 @@
 #   ! = Change something significant, or remove a feature
 #   * = Fix a bug, or make a minor improvement
 
---- 2.000_001
+--- 2.001
 
-  ! [DONE] Implement qualifiers somehow -- probably not as a property of
-    mechanisms.
-  * [DONE] Finish Mail::SPF::Mech::ip_address_in_domain().
-  * [DONE] Implement Mail::SPF::Util::ip_address_reverse().
-  ! [DONE] Clean up Mail::SPF::Mech::*::match() methods (use Mail::SPF::Mech::A
-    as model).
-  ! [DONE] Clean up Mail::SPF::Record, Mail::SPF::Record::v1, Mail::SPF::Record::v2_0.
-  ! [DONE] Finish Mail::SPF::Server::query() (including documentation).
-  * [DONE] Mail::SPF::Request:
-    - [DONE] Add auxiliary HELO identity support for %{h} macro expansion
-    - [DONE] Add "policy_domain" field, default to value of "domain" field
-    - [DONE] Store IP address as "ip_address" (for display) and "ip_address_v6"
-      (for computation) fields
-  * [DONE] Implement Mail::SPF::Util::valid_domain_for_ip_address().  Move code
-    from Mail::SPF::Mech::PTR::match().
-  ! [DONE] Finish Mail::SPF::MacroString:
-    - [DONE] %{p} macro
-    - [DONE] Upper-case macros
-  ! [DONE] Modify SPF-result-throwing idiom so that the $request is passed to
-    Mail::SPF::Result::throw() as a context, which is then translated to, and
-    stored as, result meta-data by throw().
-  * [DONE] Fix the global modifier preprocess() mess?  Special-case the exp= modifier
-    in Mail::SPF::Record::eval() or Mail::SPF::Server?  Review Mail::SPF::Mod::Exp::
-    preprocess().
-  * [DONE] Pass $server as the first argument to Mail::SPF::Mech::domain() from
-    everywhere.
-  * [DONE] Pass $server _instead_ of $record as the first argument to Mail::SPF::Mech::
-    match{,_in_domain}() (and other methods) from everywhere?
-  * [DONE] Fix calls to Mail::SPF::MacroString::{context,expand,stringify}() everywhere.
-  * [DONE] Mail::SPF::Server::dns_lookup(): Follow CNAMEs transparently.
-  * [DONE] Increase version number.
+  > Mail::SPF
+    * [DONE?] Fix the RFC 4408 POD references.
+    * Support "max_failed_dns_lookups" limit option in Mail::SPF::Server (default
+      to undef).
+    ! Resolve remaining XXXs, FIXMEs, and TODOs:
+      grep -rn 'XXX\|TODO\|FIXME' lib | grep -v '\.svn' | less
+    * Increase version number.
+    * Update changelogs.
+    * Close/fix rt.cpan.org bugs.
 
-  ! Resolve remaining XXXs, FIXMEs, and TODOs:
-    grep -rn 'XXX\|TODO\|FIXME' lib | grep -v '\.svn' | less
-  * Fix rt.cpan.org bugs.
-  * Ensure that "redirect=" always gets processed after any "exp=".
-  * Verify that "exp=" from included records is never used!
-  * [DONE?] Fix the RFC 4408 POD references.
-  * Remove or conditionalize debug output generation.
+    Non-essential:
+    * Implement DNS cache.
+    * Remove or conditionalize debug output generation.  Add more debug code?
+    ? Store the SPF record object (which one?) (and the matched mechanism?) in
+      the result object. (Needed?)
 
-  * Remove CNAME support.
-  * Update changelogs.
+  > spfquery
+    + Enable/implement 'sanitize' and 'debug' options.
+    + Implement black magic options.
 
-  ! Tests:
-    + Mail::SPF
-    + Mail::SPF::Base
-    + Mail::SPF::Exception
-    
-    + Mail::SPF::Util
-    + Mail::SPF::Request
-    + Mail::SPF::Result
-    + Mail::SPF::Server
-    + Mail::SPF::MacroString
-    
-    ~ Mail::SPF::Term
-    ~ Mail::SPF::Mech
-    ~ Mail::SPF::Mech::All
-    ~ Mail::SPF::Mech::IP4
-    ~ Mail::SPF::Mech::IP6
-    ~ Mail::SPF::Mech::A
-    ~ Mail::SPF::Mech::MX
-    ~ Mail::SPF::Mech::PTR
-    ~ Mail::SPF::Mech::Exists
-    ~ Mail::SPF::Mech::Include
-    ~ Mail::SPF::Mod
-    ~ Mail::SPF::Mod::Exp
-    ~ Mail::SPF::Mod::Redirect
-    ~ Mail::SPF::Record
-    ~ Mail::SPF::v1::Record
-    ~ Mail::SPF::v2::Record
+  Please DO report documentation bugs, as there certainly are some!
 
-  * Please DO report documentation bugs, as there certainly are some!
+--- ?
 
-# $Id: TODO 22 2006-11-15 03:31:28Z Julian Mehnle $
-# vim:tw=79
+  > Mail::SPF
+    + Add a "priority" class property to global modifier classes that defines
+      the order in which different global modifier types should be processed.
+      (This might also serve to _explicitly_ ensure that "redirect=" always
+      gets processed after any "exp=" within a given record.  Currently, this
+      is not actually guaranteed.  But this is only a design wart and does not
+      cause any bugs.)
+
+# $Id: TODO 31 2006-11-27 20:11:01Z Julian Mehnle $
+# vim:tw=79 sts=2 sw=2

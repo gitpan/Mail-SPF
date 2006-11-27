@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: IP4.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
+# $Id: IP4.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -19,7 +19,7 @@ Mail::SPF::Mech::IP4 - SPF record C<ip4> mechanism class
 use warnings;
 use strict;
 
-use base 'Mail::SPF::Mech';
+use base 'Mail::SPF::SenderIPAddrMech';
 
 use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;
@@ -154,7 +154,7 @@ sub match {
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>, L<Mail::SPF::Mech>
 
-L<RFC 4408|http://www.ietf.org/rfc/rfc4408.txt>
+L<http://www.ietf.org/rfc/rfc4408.txt>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.
