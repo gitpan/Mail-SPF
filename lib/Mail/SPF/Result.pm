@@ -3,7 +3,7 @@
 # SPF result class.
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
-# $Id: Result.pm 32 2006-11-27 20:16:03Z Julian Mehnle $
+# $Id: Result.pm 36 2006-12-09 19:01:46Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -96,7 +96,7 @@ and its derivatives, see below.
     my $request         = $result->request;
     my $local_exp       = $result->local_explanation;
     my $authority_exp   = $result->authority_explanation
-        if $result->is_code('fail');
+        if $result->can('authority_explanation');
     my $spf_header      = $result->received_spf_header;
 
 =cut
@@ -288,6 +288,22 @@ sub stringify {
 I<Mail::SPF::EInvalidMacroString>
 
 Returns a locally generated explanation for the result.
+
+The local explanation is prefixed with the authority domain whose sender policy
+is responsible for the result.  If the responsible sender policy referred to
+another domain's policy (using the C<include> mechanism or the C<redirect>
+modifier), that other domain which is I<directly> responsible for the result is
+also included in the local explanation's head.  For example:
+
+    example.com: <local-explanation>
+
+The authority domain C<example.com>'s sender policy is directly responsible for
+the result.
+
+    example.com ... other.example.org: <local-explanation>
+
+The authority domain C<example.com> (directly or indirectly) referred to the
+domain C<other.example.org>, whose sender policy then led to the result.
 
 =cut
 

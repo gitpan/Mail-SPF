@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Redirect.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
+# $Id: Redirect.pm 36 2006-12-09 19:01:46Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -146,9 +146,6 @@ sub process {
         if $result->isa('Mail::SPF::Result::None');
     
     # Propagate any other results as-is:
-    #$request->state('authority_explanation') = $sub_request->state('authority_explanation');
-    #    # Propagate authority result explanation from sub-request.
-    #    # FIXME Needed?  Seems not!  See TODO file.
     $result->throw();
 }
 

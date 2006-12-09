@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Request.pm 28 2006-11-19 20:58:45Z Julian Mehnle $
+# $Id: Request.pm 36 2006-12-09 19:01:46Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -69,6 +69,9 @@ use constant default_localpart => 'postmaster';
                     = $request->ip_address_v6;  #   IPv4-mapped IPv6 address
     my $helo_identity                           # additional HELO identity
                     = $request->helo_identity;  #   for non-HELO scopes
+    
+    my $record      = $request->record;
+        # the record selected during processing of the request, may be undef
     
     $request->state(field => 'value');
     my $value = $request->state('field');
@@ -280,8 +283,11 @@ sub new {
         and not defined($self->{ip_address});
     
     # Ensure ip_address is a NetAddr::IP object:
-    $self->{ip_address} = NetAddr::IP->new($self->{ip_address})
-        if not UNIVERSAL::isa($self->{ip_address}, 'NetAddr::IP');
+    if (not UNIVERSAL::isa($self->{ip_address}, 'NetAddr::IP')) {
+        my $ip_address = NetAddr::IP->new($self->{ip_address})
+            or throw Mail::SPF::EInvalidOptionValue("Invalid IP address '$self->{ip_address}'");
+        $self->{ip_address} = $ip_address;
+    }
     
     # Convert IPv4 address to IPv4-mapped IPv6 address:
     if (Mail::SPF::Util->ipv6_address_is_ipv4_mapped($self->{ip_address})) {
@@ -421,6 +427,16 @@ __PACKAGE__->make_accessor($_, TRUE)
         scope identity domain localpart
         ip_address ip_address_v6 helo_identity
     );
+
+=item B<record>: returns I<Mail::SPF::Record>
+
+Returns the SPF record selected during the processing of the request, or
+B<undef> if there is none.
+
+=cut
+
+# Make read/write accessor:
+__PACKAGE__->make_accessor('record', FALSE);
 
 =item B<state($field)>: returns anything
 

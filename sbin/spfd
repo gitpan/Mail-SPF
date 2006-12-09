@@ -11,7 +11,7 @@
 
 =head1 NAME
 
-spfd - Simple forking daemon to provide SPF query services
+spfd (using Mail::SPF) - Simple forking daemon to provide SPF query services
 
 =head1 VERSION
 
@@ -554,18 +554,19 @@ while (my $socket = $listen_socket->accept()) {
         $response_values->{authority_explanation}   = $result->authority_explanation
             if $result->can('authority_explanation');
         $response_values->{received_spf_header}     = $result->received_spf_header;
-
+        $response_values->{spf_record}              = $result->request->root_request->record
+            if defined($result->request->root_request->record);
+        
         # Legacy response values:
         $response_values->{smtp_comment}            =
             defined($response_values->{authority_explanation}) ?
                 $response_values->{authority_explanation}
             :   $response_values->{local_explanation};
         $response_values->{header_comment}          = $response_values->{local_explanation};
-        #$response_values->{spf_record}             = TODO
         
         foreach my $key (qw(
-            result local_explanation authority_explanation received_spf_header
-            smtp_comment header_comment spf_record
+            result local_explanation authority_explanation received_spf_header spf_record
+            smtp_comment header_comment
         )) {
             defined($response_values->{$key}) or next;
             $socket->print("$key=$response_values->{$key}\n");

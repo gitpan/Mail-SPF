@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Server.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
+# $Id: Server.pm 36 2006-12-09 19:01:46Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -67,9 +67,9 @@ use constant default_default_authority_explanation  =>
 =head1 DESCRIPTION
 
 B<Mail::SPF::Server> is a server class for processing SPF requests.  Each
-server instance can be configured with specific processing parameters and has
-its own DNS cache (TODO).  Also, the default I<Net::DNS::Resolver> DNS resolver
-used for making DNS look-ups can be overridden with a custom resolver object.
+server instance can be configured with specific processing parameters.  Also,
+the default I<Net::DNS::Resolver> DNS resolver used for making DNS look-ups can
+be overridden with a custom resolver object.
 
 =head2 Constructor
 
@@ -180,11 +180,58 @@ The following instance methods are provided:
 
 =over
 
-=item B<process($request)>: returns I<Mail::SPF::Result>; throws Perl exceptions
+=item B<process($request)>: returns I<Mail::SPF::Result>
 
 Processes the given I<Mail::SPF::Request> object, queries the authoritative
-domain for an SPF sender policy, evaluates the policy, and returns a
-I<Mail::SPF::Result> object denoting the result of the policy evaluation.
+domain for an SPF sender policy (see the description of the L</select_record>
+method), evaluates the policy with regard to the given identity and other
+request parameters, and returns a I<Mail::SPF::Result> object denoting the
+result of the policy evaluation.  See RFC 4408, 4, and RFC 4406, 4, for
+details.
+
+=cut
+
+sub process {
+    my ($self, $request) = @_;
+    
+    my $authority_explanation = $self->{default_authority_explanation}->new(request => $request);
+    $request->state('authority_explanation', $authority_explanation);
+    $request->state('dns_interactive_terms_count', 0);
+    
+    my $result;
+    try {
+        my $record = $self->select_record($request);
+        $request->record($record);
+        $record->eval($self, $request);
+    }
+    catch Mail::SPF::Result with {
+        $result = shift;
+    }
+    catch Mail::SPF::EDNSError with {
+        $result = Mail::SPF::Result::TempError->new($self, $request, shift->text);
+    }
+    catch Mail::SPF::ERecordSelectionError with {
+        $result = Mail::SPF::Result::PermError->new($self, $request, shift->text);
+    }
+    catch Mail::SPF::ESyntaxError with {
+        $result = Mail::SPF::Result::PermError->new($self, $request, shift->text);
+    }
+    catch Mail::SPF::EProcessingLimitExceeded with {
+        $result = Mail::SPF::Result::PermError->new($self, $request, shift->text);
+    };
+    # Propagate other, unknown errors.
+    # This should not happen, but if it does, it helps exposing the bug!
+    
+    return $result;
+}
+
+=item B<select_record($request)>: returns I<Mail::SPF::Record>;
+throws I<Mail::SPF::ERecordSelectionError>, I<Mail::SPF::EDNSError>, I<Mail::SPF::ESyntaxError>
+
+Queries the authority domain of the given I<Mail::SPF::Request> object for SPF
+sender policy records and, if multiple records are available, selects the
+record of the highest acceptable record version that covers the requested
+scope.
 
 More precisely, the following algorithm is performed:
 
@@ -205,124 +252,144 @@ If this yields no SPF records, query the authority domain for SPF records of
 the C<TXT> DNS RR type, discarding any records that are of an inacceptable
 version or do not cover the desired scope.
 
-If still no acceptable SPF records could be found, processing ends with a
-C<none> result.
+If still no acceptable SPF records could be found, throw a
+I<Mail::SPF::ENoAcceptableRecord> exception.
 
 =item 3.
 
 Discard all records but those of the highest acceptable version found.
 
-If more than one record remains, processing ends with a C<permerror> result.
-
-=item 4.
-
-Parse the selected record, constructing a I<Mail::SPF::Record> object, and
-evaluate it with regard to the given identity and other request parameters.
-Return an appropriate result.
+If exactly one record remains, return it.  Otherwise, throw a
+I<Mail::SPF::ERedundantAcceptableRecords> exception.
 
 =back
 
+I<Mail::SPF::EDNSError> exceptions due to DNS look-ups and
+I<Mail::SPF::ESyntaxError> exceptions due to an invalid acceptable record may
+also be thrown.
+
 =cut
 
-sub process {
+sub select_record {
     my ($self, $request) = @_;
     
-    my $authority_explanation = $self->{default_authority_explanation}->new(request => $request);
-    $request->state('authority_explanation', $authority_explanation);
-    $request->state('dns_interactive_terms_count', 0);
+    my $domain   = $request->authority_domain;
+    my @versions = $request->versions;
+    my $scope    = $request->scope;
     
-    my $result;
+    # Employ identical behavior for 'v=spf1' and 'spf2.0' records, both of
+    # which support SPF (code 99) and TXT type records (this may be different
+    # in future revisions of SPF):
+    # Query for SPF type records first, then fall back to TXT type records.
+    
+    my @records;
+    
+    # Query for SPF type RRs first:
     try {
-        my $domain   = $request->authority_domain;
-        my @versions = sort { $b <=> $a } $request->versions;
-            # Try higher record versions first.
-            # (This may be too simplistic for future revisions of SPF.)
-        my $scope    = $request->scope;
-        
-        # Employ identical behavior for 'v=spf1' and 'spf2.0' records, both of
-        # which support SPF (code 99) and TXT type records (this may be different
-        # in future revisions of SPF):
-        # Query for SPF type records first, then fall back to TXT type records.
-        
-        my @records;
-        
-        # Query for SPF type RRs first:
-        try {
-            my $packet = $self->dns_lookup($domain, 'SPF');
-            push(
-                @records,
-                $self->get_acceptable_records_from_packet(
-                    $packet, 'SPF', \@versions, $scope, $domain)
-            );
-        }
-        catch Mail::SPF::EDNSTimeout with {
-            # FIXME Ignore DNS time-outs on SPF type lookups?
-            # Apparrently some brain-dead DNS servers time out on SPF-type queries.
-        };
-        
-        if (not @records) {
-            # No usable SPF-type RRs, try TXT-type RRs.
-            
-            # NOTE:
-            #   This deliberately violates RFC 4406 (Sender ID), 4.4/3 (4.4.1):
-            #   TXT-type RRs are still tried if there _are_ SPF-type RRs but all of
-            #   them are inapplicable (i.e. "Hi!", or even "spf2.0/pra" for an
-            #   'mfrom' scope request).  This conforms to the spirit of the more
-            #   sensible algorithm in RFC 4408 (SPF), 4.5.
-            #   Implication:  Sender ID processing may make use of existing TXT-
-            #   type records where a result of "None" would normally be returned
-            #   under a strict interpretation of RFC 4406.
-            
-            my $packet = $self->dns_lookup($domain, 'TXT');
-            push(
-                @records,
-                $self->get_acceptable_records_from_packet(
-                    $packet, 'TXT', \@versions, $scope, $domain)
-            );
-        }
-        
-        @records
-            or throw Mail::SPF::Result::None($self, $request,
-                "No applicable sender policy available");  # RFC 4408, 4.5/7
-        
-        #STDERR->print("DEBUG: Acceptable records:\n");
-        #foreach my $record (@records) {
-        #    STDERR->print("  $record\n");
-        #}
-        
-        # Discard all records but the highest acceptable version:
-        my $preferred_record_class = $records[0]->class;
-        #STDERR->print("DEBUG: Discarding all non-'$preferred_record_class' records.\n");
-        @records = grep($_->isa($preferred_record_class), @records);
-        
-        #STDERR->print("DEBUG: Acceptable records after discarding:\n");
-        #foreach my $record (@records) {
-        #    STDERR->print("  $record\n");
-        #}
-        
-        @records == 1
-            or throw Mail::SPF::Result::PermError($self, $request,
-                "Redundant applicable '" . $preferred_record_class->version_tag . "' " .
-                "sender policies found");  # RFC 4408, 4.5/6
-        
-        $records[0]->eval($self, $request);
+        my $packet = $self->dns_lookup($domain, 'SPF');
+        push(
+            @records,
+            $self->get_acceptable_records_from_packet(
+                $packet, 'SPF', \@versions, $scope, $domain)
+        );
     }
-    catch Mail::SPF::Result with {
-        $result = shift;
-    }
-    catch Mail::SPF::ESyntaxError with {
-        $result = Mail::SPF::Result::PermError->new($self, $request, shift->text);
-    }
-    catch Mail::SPF::EProcessingLimitExceeded with {
-        $result = Mail::SPF::Result::PermError->new($self, $request, shift->text);
-    }
-    catch Mail::SPF::EDNSError with {
-        $result = Mail::SPF::Result::TempError->new($self, $request, shift->text);
+    catch Mail::SPF::EDNSTimeout with {
+        # FIXME Ignore DNS time-outs on SPF type lookups?
+        # Apparrently some brain-dead DNS servers time out on SPF-type queries.
     };
-    # Propagate other, unknown errors.
-    # This should not happen, but if it does, it helps exposing the bug!
     
-    return $result;
+    if (not @records) {
+        # No usable SPF-type RRs, try TXT-type RRs.
+        
+        # NOTE:
+        #   This deliberately violates RFC 4406 (Sender ID), 4.4/3 (4.4.1):
+        #   TXT-type RRs are still tried if there _are_ SPF-type RRs but all of
+        #   them are inapplicable (i.e. "Hi!", or even "spf2.0/pra" for an
+        #   'mfrom' scope request).  This conforms to the spirit of the more
+        #   sensible algorithm in RFC 4408 (SPF), 4.5.
+        #   Implication:  Sender ID processing may make use of existing TXT-
+        #   type records where a result of "None" would normally be returned
+        #   under a strict interpretation of RFC 4406.
+        
+        my $packet = $self->dns_lookup($domain, 'TXT');
+        push(
+            @records,
+            $self->get_acceptable_records_from_packet(
+                $packet, 'TXT', \@versions, $scope, $domain)
+        );
+    }
+    
+    @records
+        or throw Mail::SPF::Result::None($self, $request,
+            "No applicable sender policy available");  # RFC 4408, 4.5/7
+    
+    #STDERR->print("DEBUG: Acceptable records:\n");
+    #foreach my $record (@records) {
+    #    STDERR->print("  $record\n");
+    #}
+    
+    # Discard all records but the highest acceptable version:
+    my $preferred_record_class = $records[0]->class;
+    #STDERR->print("DEBUG: Discarding all non-'$preferred_record_class' records.\n");
+    @records = grep($_->isa($preferred_record_class), @records);
+    
+    #STDERR->print("DEBUG: Acceptable records after discarding:\n");
+    #foreach my $record (@records) {
+    #    STDERR->print("  $record\n");
+    #}
+    
+    @records == 1
+        or throw Mail::SPF::Result::PermError($self, $request,
+            "Redundant applicable '" . $preferred_record_class->version_tag . "' " .
+            "sender policies found");  # RFC 4408, 4.5/6
+    
+    return $records[0];
+}
+
+=item B<get_acceptable_records_from_packet($packet, $rr_type, \@versions, $scope, $domain)>:
+returns I<list> of I<Mail::SPF::Record>
+
+Filters from the given I<Net::DNS::Packet> object all resource records of the
+given RR type and for the given domain name, discarding any records that are
+not SPF records at all, that are of an inacceptable SPF record version, or that
+do not cover the given scope.  Returns a list of acceptable records.
+
+=cut
+
+sub get_acceptable_records_from_packet {
+    my ($self, $packet, $rr_type, $versions, $scope, $domain) = @_;
+    
+    my @versions = sort { $b <=> $a } @$versions;
+        # Try higher record versions first.
+        # (This may be too simplistic for future revisions of SPF.)
+    
+    my @records;
+    foreach my $rr ($packet->answer) {
+        next if $rr->type ne $rr_type;  # Ignore RRs of unexpected type.
+        
+        my $text = join('', $rr->char_str_list);
+        my $record;
+        
+        # Try to parse RR as each of the requested record versions,
+        # starting from the highest version:
+        VERSION:
+        foreach my $version (@versions) {
+            my $class = $self->record_classes_by_version->{$version};
+            eval("require $class");
+            try {
+                $record = $class->new_from_string($text);
+            }
+            catch Mail::SPF::EInvalidRecordVersion with {};
+                # Ignore non-SPF and unknown-version records.
+                # Propagate other errors (including syntax errors), though.
+            last VERSION if defined($record);
+        }
+        
+        push(@records, $record)
+            if  defined($record)
+            and grep($scope eq $_, $record->scopes);  # record covers requested scope?
+    }
+    return @records;
 }
 
 =item B<dns_lookup($domain, $rr_type)>: returns I<Net::DNS::Packet>;
@@ -363,47 +430,6 @@ sub dns_lookup {
             "'" . $packet->header->rcode . "' error on DNS '$rr_type' lookup of '$domain'");
     
     return $packet;
-}
-
-=item B<get_acceptable_records_from_packet($packet, $rr_type, \@versions, $scope, $domain)>:
-returns I<list> of I<Mail::SPF::Record>
-
-Filters from the given I<Net::DNS::Packet> object all resource records of the
-given RR type and for the given domain name, discarding any records that are
-not SPF records at all, that are of an inacceptable SPF record version, or that
-do not cover the given scope.  Returns a list of acceptable records.
-
-=cut
-
-sub get_acceptable_records_from_packet {
-    my ($self, $packet, $rr_type, $versions, $scope, $domain) = @_;
-    my @records;
-    foreach my $rr ($packet->answer) {
-        next if $rr->type ne $rr_type;  # Ignore RRs of unexpected type.
-        
-        my $text = join('', $rr->char_str_list);
-        my $record;
-        
-        # Try to parse RR as each of the requested record versions,
-        # starting from the highest version:
-        VERSION:
-        foreach my $version (@$versions) {
-            my $class = $self->record_classes_by_version->{$version};
-            eval("require $class");
-            try {
-                $record = $class->new_from_string($text);
-            }
-            catch Mail::SPF::EInvalidRecordVersion with {};
-                # Ignore non-SPF and unknown-version records.
-                # Propagate other errors (including syntax errors), though.
-            last VERSION if defined($record);
-        }
-        
-        push(@records, $record)
-            if  defined($record)
-            and grep($scope eq $_, $record->scopes);  # record covers requested scope?
-    }
-    return @records;
 }
 
 =item B<count_dns_interactive_term($request)>: throws I<Mail::SPF::EProcessingLimitExceeded>

@@ -5,7 +5,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: SPF.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
+# $Id: SPF.pm 36 2006-12-09 19:01:46Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -17,11 +17,11 @@ Mail::SPF - An object-oriented implementation of Sender Policy Framework
 
 =head1 VERSION
 
-2.000_003
+2.001
 
 =cut
 
-use version; our $VERSION = qv('2.000_003');
+use version; our $VERSION = qv('2.001');
 
 use warnings;
 use strict;
@@ -47,7 +47,7 @@ use constant FALSE  => not TRUE;
                                                 #   for %{h} macro expansion
     );
     
-    my $result      = $spf->process($request);
+    my $result      = $spf_server->process($request);
     
     print("$result\n");
     my $result_code     = $result->code;        # 'pass', 'fail', etc.

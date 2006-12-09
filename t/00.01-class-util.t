@@ -87,4 +87,4 @@ BEGIN { use_ok('Mail::SPF::Util') }
 
 #### valid_domain_for_ip_address() ####
 
-# TODO Cannot test valid_domain_for_ip_address() without virtualized DNS access.
+# TODO

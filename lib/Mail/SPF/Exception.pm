@@ -3,7 +3,7 @@
 # Mail::SPF exception classes.
 #
 # (C) 2006 Julian Mehnle <julian@mehnle.net>
-# $Id: Exception.pm 22 2006-11-15 03:31:28Z Julian Mehnle $
+# $Id: Exception.pm 36 2006-12-09 19:01:46Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -101,9 +101,17 @@ our @ISA = qw(Mail::SPF::Exception);
 package Mail::SPF::EDNSTimeout;
 our @ISA = qw(Mail::SPF::EDNSError);
 
-# No suitable record found:
-package Mail::SPF::ENoSuitableRecord;
+# Record selection error:
+package Mail::SPF::ERecordSelectionError;
 our @ISA = qw(Mail::SPF::Exception);
+
+# No acceptable record found:
+package Mail::SPF::ENoAcceptableRecord;
+our @ISA = qw(Mail::SPF::ERecordSelectionError);
+
+# Redundant acceptable records found:
+package Mail::SPF::ERedundantAcceptableRecords;
+our @ISA = qw(Mail::SPF::ERecordSelectionError);
 
 # No unparsed text available:
 package Mail::SPF::ENoUnparsedText;

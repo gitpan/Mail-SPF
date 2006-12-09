@@ -4,7 +4,7 @@ use blib;
 
 use Error ':try';
 
-use Test::More tests => 18;
+use Test::More tests => 16;
 
 use Mail::SPF::Request;
 
@@ -26,19 +26,6 @@ BEGIN { use_ok('Mail::SPF::Result') }
     is($result->server,             'dummy server',     'Basic result server()');
     is($result->request,            'dummy request',    'Basic result request()');
     is($result->text,               'result text',      'Basic result text()');
-}
-
-
-#### Minimally Parameterized Result ####  XXX Do we need these tests? XXX
-
-{
-    my $result = eval { Mail::SPF::Result->new('dummy server', 'dummy request') };
-
-    $@ eq '' and isa_ok($result, 'Mail::SPF::Result', 'Minimal result object')
-        or BAIL_OUT("Minimal result instantiation failed: $@");
-
-    # Have omitted options been deduced correctly?
-    is($result->text,               undef,              'Minimal result text()');
 }
 
 

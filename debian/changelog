@@ -1,26 +1,15 @@
-mail-spf-perl (2.000+003) unstable; urgency=low
+mail-spf-perl (2.001) unstable; urgency=low
 
-  > Pre-release.
+  > Gold Release!
   > Major overhaul:
-    ! Major code refactoring, achieving full RFC 4408/4406 compliance.
-    ! Switched from EU::MM to Module::Build.
+    ! Major code refactoring, achieving full RFC 4408/4406 compliance, and
+      breaking API compatibility with 2.000.
+    ! Switched from ExtUtils::MakeMaker to Module::Build.
     + Added complete rewrites of spfquery (2.500) and spfd (2.000).
     + Added complete documentation.
     + Added unit tests and the RFC 4408 test-suite.
     + Added Debian package control files.
-    + And more...
+    + And more... (closes: rt.cpan.org #20821, #20822, #21922, #21925)
 
- -- Julian Mehnle <julian@mehnle.net>  Mon, 27 Nov 2006 20:00:00 +0000
-
-mail-spf-perl (2.000+002) unstable; urgency=low
-
-  > Pre-release.
-
- -- Julian Mehnle <julian@mehnle.net>  Wed, 15 Nov 2006 02:00:00 +0000
-
-mail-spf-perl (2.000+001) unstable; urgency=low
-
-  > Pre-release.
-
- -- Julian Mehnle <julian@mehnle.net>  Sat,  4 Nov 2006 23:45:00 +0000
+ -- Julian Mehnle <julian@mehnle.net>  Sat,  9 Dec 2006 20:00:00 +0000
 

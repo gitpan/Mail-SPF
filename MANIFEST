@@ -8,6 +8,8 @@ debian/copyright
 debian/libmail-spf-perl.install
 debian/rules
 debian/spf-tools-perl.install
+debian/spf-tools-perl.postinst
+debian/spf-tools-perl.prerm
 INSTALL
 lib/Mail/SPF.pm
 lib/Mail/SPF/Base.pm

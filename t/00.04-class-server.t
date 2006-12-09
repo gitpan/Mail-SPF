@@ -128,6 +128,6 @@ BEGIN { use_ok('Mail::SPF::Server') }
 }
 
 
-#### SPF Record Selection / get_acceptable_records_from_packet() ####
+#### SPF Record Selection / select_record(), get_acceptable_records_from_packet() ####
 
 # This gets checked by the RFC 4408 test suite.

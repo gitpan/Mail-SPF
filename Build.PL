@@ -2,7 +2,7 @@
 # Module::Build build script for Mail::SPF
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
-# $Id: Build.PL 28 2006-11-19 20:58:45Z Julian Mehnle $
+# $Id: Build.PL 36 2006-12-09 19:01:46Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -50,9 +50,8 @@ my $build = $class->new(
         # Core requirements:
         perl            => '5.006',
         version         => 0,
-        Getopt::Long    => 0,
         Error           => 0,
-        NetAddr::IP     => '4.0',
+        NetAddr::IP     => '4',
         Net::DNS        => '0.58',
         URI             => '1.13'
     },
