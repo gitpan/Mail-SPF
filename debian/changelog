@@ -1,3 +1,16 @@
+mail-spf-perl (2.002) unstable; urgency=low
+
+  Mail::SPF:
+  * Updated default authority explanation string to the SPF website's new
+    "Why?" page URL parameters scheme:
+    <http://www.openspf.org/Why?id=%{S}&ip=%{I}&receiver=%{R}>
+
+  spfquery:
+  * Updated the '--help' text and man-page with regard to the black magic
+    options (which require the yet unreleased Mail::SPF::BlackMagic module).
+
+ -- Julian Mehnle <julian@mehnle.net>  Thu, 14 Dec 2006 00:00:00 +0000
+
 mail-spf-perl (2.001) unstable; urgency=low
 
   > Gold Release!

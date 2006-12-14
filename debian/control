@@ -14,14 +14,15 @@ Description: Perl implementation of Sender Policy Framework and Sender ID
  Mail::SPF is an object-oriented Perl implementation of the Sender Policy
  Framework (SPF) e-mail sender authentication system <http://www.openspf.org>.
  .
- It supports both SPFv1 (v=spf1) and Sender ID (spf2.0) records and is fully
- compliant to RFCs 4408 and 4406.  (It does not however implement the patented
- PRA address selection algorithm described in RFC 4407.)
+ It supports both the TXT and SPF RR types as well as both SPFv1 (v=spf1) and
+ Sender ID (spf2.0) records, and it is fully compliant to RFCs 4408 and 4406.
+ (It does not however implement the patented PRA address selection algorithm
+ described in RFC 4407.)
 
 Package: spf-tools-perl
 Section: mail
 Architecture: all
-Depends: perl (>= 5.6), libversion-perl, libmail-spf-perl (>= 2.001), ${misc:Depends}
+Depends: perl (>= 5.6), libversion-perl, libmail-spf-perl (>= 2.002), ${misc:Depends}
 Conflicts: spfquery, libmail-spf-query-perl (<< 1:1.999.1-3)
 Description: SPF tools (spfquery, spfd) based on the Mail::SPF Perl module
  A collection of Sender Policy Framework (SPF) tools that are based on the

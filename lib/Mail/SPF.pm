@@ -5,7 +5,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: SPF.pm 36 2006-12-09 19:01:46Z Julian Mehnle $
+# $Id: SPF.pm 38 2006-12-14 00:27:08Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -17,11 +17,11 @@ Mail::SPF - An object-oriented implementation of Sender Policy Framework
 
 =head1 VERSION
 
-2.001
+2.002
 
 =cut
 
-use version; our $VERSION = qv('2.001');
+use version; our $VERSION = qv('2.002');
 
 use warnings;
 use strict;

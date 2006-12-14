@@ -16,7 +16,7 @@ a domain's SPF policy
 
 =head1 VERSION
 
-2.500
+2.501
 
 =head1 SYNOPSIS
 
@@ -161,17 +161,15 @@ Perform a maximum of I<n> DNS name look-ups per mechanism or modifier.
 Defaults to B<10>.  Do I<not> override the default unless you know what you are
 doing!
 
-=item B<--rcpt-to> I<email-addresses>
+=item B<--authorize-mxes-for> I<email-address>|I<domain>B<,>...
 
-Automatically allow the secondary MXes of the comma-separated list of
-I<email-addresses>.
+Consider all the MXes of the comma-separated list of I<email-address>es and
+I<domain>s as inherently authorized.
 
-=item B<--trusted>
+=item B<--tfwl>
 
-=item B<--no-trusted>
-
-Do (not) perform C<trusted-forwarder.org> accreditation checking.  Disabled by
-default.
+Perform L<C<trusted-forwarder.org>|http://www.trusted-forwarder.org>
+accreditation checking.
 
 =item B<--guess> I<spf-terms>
 
@@ -283,6 +281,17 @@ scope directly.
 
 =item *
 
+The B<--debug> and B<--(no-)sanitize> options are currently ignored by this
+version of B<spfquery>.  They will again be supported in the future.
+
+=item *
+
+Several features that were supported by earlier versions of B<spfquery> are
+considered black magic and thus are now disabled by default.  See L</Black
+Magic Options>.
+
+=item *
+
 Several option names have been deprecated.  This is a list of them and their
 preferred synonyms:
 
@@ -293,18 +302,8 @@ preferred synonyms:
   --name              | --hostname
   --max-lookup-count, | --max-dns-interactive-terms
     --max-lookup      |
-
-=item *
-
-The B<--debug> and B<--(no-)sanitize> options are currently ignored by this
-version of B<spfquery>.  They will again be supported in the future.
-
-=item *
-
-Several features that were supported by earlier versions of B<spfquery> are
-considered black magic and have thus been disabled: B<--rcpt-to>, B<--trusted>,
-B<--guess>, B<--local>, B<--override>, B<--fallback>.  See L</Black Magic
-Options>.
+  --rcpt-to, -r       | --authorize-mxes-for
+  --trusted           | --tfwl
 
 =back
 
@@ -324,7 +323,7 @@ This version of B<spfquery> is a complete rewrite by Julian Mehnle
 
 =cut
 
-our $VERSION = '2.500';
+our $VERSION = '2.501';
 
 use warnings;
 use strict;
@@ -415,26 +414,25 @@ Valid OPTIONS (and their defaults) are:
                         The name of the system doing the SPF checking (local
                         system's configured hostname).
     --keep-comments     Print comments found when reading from a file.
-#    --no-sanitize       Do not clean up invalid characters in output.
-#    --debug             Output debugging information.
+    --no-sanitize       Do not clean up invalid characters in output.
+    --debug             Output debugging information.
 
-#Black-magic options:
-#    --max-dns-interactive-terms <n>
-#                        Maximum number of DNS-interactive mechanisms and
-#                        modifiers (10).
-#    --max-name-lookups-per-term <n>
-#                        Maximum number of DNS name look-ups per mechanism or
-#                        modifier (10).
-#    --rcpt-to <email-addresses>
-#                        A comma-separated lists of email addresses that will
-#                        have e-mail from their secondary MXes automatically
-#                        allowed.
-#    --trusted           Check trusted-forwarder.org white-list.
-#    --guess <spf-terms> Default checks if no SPF record is found.
-#    --local <spf-terms> Local policy for whitelisting.
-#    --override <domain>=<spf-record>
-#    --fallback <domain>=<spf-record>
-#                        Set override and fallback SPF records for domains.
+Black-magic OPTIONS are:
+    --max-dns-interactive-terms <n>
+                        Maximum number of DNS-interactive mechanisms and
+                        modifiers (10).
+    --max-name-lookups-per-term <n>
+                        Maximum number of DNS name look-ups per mechanism or
+                        modifier (10).
+    --authorize-mxes-for <email-address>|<domain>,...
+                        A comma-separated list of e-mail addresses and domains
+                        whose MXes will be considered inherently authorized.
+    --tfwl              Check trusted-forwarder.org white-list.
+    --guess <spf-terms> Default checks if no SPF record is found.
+    --local <spf-terms> Local policy to process before default result.
+    --override <domain>=<spf-record>
+    --fallback <domain>=<spf-record>
+                        Set override and fallback SPF records for domains.
 
 Examples:
     spfquery --scope mfrom --id user@example.com --ip 1.2.3.4
@@ -502,8 +500,9 @@ my $getopt_result = GetOptions(
     'enable-black-magic!',
     'max-dns-interactive-terms=i',
     'max-name-lookups-per-term=i',
-    'rcpt-to|r=s',  # TODO Implement!
-    'trusted!',     # TODO Implement!
+    'authorize-mxes-for=s',
+                    # TODO implement!
+    'tfwl!',        # TODO Implement!
     'guess=s',      # TODO Implement!
     'local=s',      # TODO Implement!
     'override=s%',  # TODO Implement!
@@ -519,7 +518,10 @@ my $getopt_result = GetOptions(
     'i=s',          # Now 'ip-address'
     'name=s',       # Now 'hostname'
     'max-lookup-count=i',
-    'max-lookup=i'  # Now 'max-dns-interactive-terms'
+    'max-lookup=i', # Now 'max-dns-interactive-terms'
+    'rcpt-to=s',    # Now 'authorize-mxes-for'
+    'r=s',          # Now 'authorize-mxes-for'
+    'trusted!'      # Now 'tfwl'
 );
 
 if (not $getopt_result) {
@@ -543,6 +545,9 @@ deprecated_option('i',                'ip-address',                $options);
 deprecated_option('name',             'hostname',                  $options);
 deprecated_option('max-lookup-count', 'max-dns-interactive-terms', $options);
 deprecated_option('max-lookup',       'max-dns-interactive-terms', $options);
+deprecated_option('rcpt-to',          'authorize-mxes-for',        $options);
+deprecated_option('r',                'authorize-mxes-for',        $options);
+deprecated_option('trusted',          'tfwl',                      $options);
 
 if ($options->{'enable-black-magic'}) {
     if (not defined(eval('require Mail::SPF::BlackMagic'))) {

@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Mod.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
+# $Id: Mod.pm 38 2006-12-14 00:27:08Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -342,7 +342,7 @@ used to convert the object into a string.
 
 =head1 SEE ALSO
 
-L<Mail::SPF::GlobalMod>, L<Mail::SPF::PositionalMod>
+L<Mail::SPF::Mod::Redirect>, L<Mail::SPF::Mod::Exp>
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>
 

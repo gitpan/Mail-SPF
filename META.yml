@@ -1,6 +1,6 @@
 ---
 name: Mail-SPF
-version: 2.001000
+version: 2.002000
 author:
   - 'Julian Mehnle <julian@mehnle.net>'
   - 'Shevek <cpan@anarres.org>'
@@ -20,7 +20,7 @@ build_requires:
 provides:
   Mail::SPF:
     file: lib/Mail/SPF.pm
-    version: 2.001000
+    version: 2.002000
   Mail::SPF::Base:
     file: lib/Mail/SPF/Base.pm
   Mail::SPF::EAbstractClass:

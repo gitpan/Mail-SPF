@@ -4,7 +4,7 @@
 #
 # (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Server.pm 36 2006-12-09 19:01:46Z Julian Mehnle $
+# $Id: Server.pm 38 2006-12-14 00:27:08Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -42,7 +42,7 @@ sub default_max_name_lookups_per_mx_mech  { shift->max_name_lookups_per_term };
 sub default_max_name_lookups_per_ptr_mech { shift->max_name_lookups_per_term };
 
 use constant default_default_authority_explanation  =>
-    'Please see http://www.openspf.org/why.html?sender=%{S}&ip=%{I}&receiver=%{R}';
+    'Please see http://www.openspf.org/Why?id=%{S}&ip=%{I}&receiver=%{R}';
 
 # Interface:
 ##############################################################################
@@ -92,7 +92,7 @@ A I<string> denoting the default (not macro-expanded) authority explanation
 string to use if the authority domain does not specify an explanation string of
 its own.  Defaults to:
 
-    'Please see http://www.openspf.org/why.html?sender=%{S}&ip=%{I}&receiver=%{R}'
+    'Please see http://www.openspf.org/Why?id=%{S}&ip=%{I}&receiver=%{R}'
 
 =item B<hostname>
 
