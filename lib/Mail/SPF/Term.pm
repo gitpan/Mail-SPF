@@ -2,9 +2,9 @@
 # Mail::SPF::Term
 # SPF record term class.
 #
-# (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Term.pm 28 2006-11-19 20:58:45Z Julian Mehnle $
+# $Id: Term.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -18,6 +18,8 @@ Mail::SPF::Term - SPF record term class
 
 use warnings;
 use strict;
+
+use utf8;  # Hack to keep Perl 5.6 from whining about /[\p{}]/.
 
 use base 'Mail::SPF::Base';
 

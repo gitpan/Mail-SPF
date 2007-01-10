@@ -2,9 +2,9 @@
 # Mail::SPF::Mech::PTR
 # SPF record "ptr" mechanism class.
 #
-# (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: PTR.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
+# $Id: PTR.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
 #
 ##############################################################################
 

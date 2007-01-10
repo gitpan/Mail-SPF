@@ -2,8 +2,8 @@
 # Mail::SPF::Result
 # SPF result class.
 #
-# (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
-# $Id: Result.pm 36 2006-12-09 19:01:46Z Julian Mehnle $
+# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# $Id: Result.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -17,6 +17,8 @@ Mail::SPF::Result - SPF result class
 
 use warnings;
 use strict;
+
+use utf8;  # Hack to keep Perl 5.6 from whining about /[\p{}]/.
 
 use base 'Error', 'Mail::SPF::Base';
     # An SPF result is not really a code exception in ideology, but in form.

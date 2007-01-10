@@ -3,7 +3,7 @@
 #
 # spfd: Simple forking SPF query service daemon
 # 
-# (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2003-2004 Meng Weng Wong <mengwong+spf@pobox.com>
 # $Id: spfd 148 2006-06-17 21:50:57Z Julian Mehnle $
 #

@@ -2,9 +2,9 @@
 # Mail::SPF::Mech
 # SPF record mechanism class.
 #
-# (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Mech.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
+# $Id: Mech.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -19,6 +19,8 @@ Mail::SPF::Mech - SPF record mechanism base class
 use warnings;
 use strict;
 
+use utf8;  # Hack to keep Perl 5.6 from whining about /[\p{}]/.
+
 use base 'Mail::SPF::Term';
 
 use Error ':try';
@@ -32,16 +34,12 @@ use Mail::SPF::Util;
 use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;
 
-use constant {
-    default_qualifier           => Mail::SPF::Record->default_qualifier,
-    default_ipv4_prefix_length  => 32,
-    default_ipv6_prefix_length  => 128
-};
+use constant default_qualifier          => Mail::SPF::Record->default_qualifier;
+use constant default_ipv4_prefix_length => 32;
+use constant default_ipv6_prefix_length => 128;
 
-use constant {
-    qualifier_pattern   => qr/[+\-~?]/,
-    name_pattern        => qr/ ${\__PACKAGE__->SUPER::name_pattern} (?= [:\/\x20] | $ ) /x
-};
+use constant qualifier_pattern  => qr/[+\-~?]/;
+use constant name_pattern       => qr/ ${\__PACKAGE__->SUPER::name_pattern} (?= [:\/\x20] | $ ) /x;
 
 use constant explanation_templates_by_result_code => {
     pass        => "Sender is authorized to use '%{s}' in '%{_scope}' identity",

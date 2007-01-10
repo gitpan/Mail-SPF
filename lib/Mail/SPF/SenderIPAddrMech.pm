@@ -3,8 +3,8 @@
 # Abstract base class for SPF record mechanisms that operate on the SMTP
 # sender's IP address.
 #
-# (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
-# $Id: SenderIPAddrMech.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
+# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# $Id: SenderIPAddrMech.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
 #
 ##############################################################################
 

@@ -3,7 +3,7 @@
 # 
 # spfquery: Command-line tool for performing SPF queries
 #
-# (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2004      Wayne Schlitt <wayne@schlitt.net>
 # $Id: spfquery 138 2006-01-22 18:00:34Z julian $
 #
@@ -168,8 +168,7 @@ I<domain>s as inherently authorized.
 
 =item B<--tfwl>
 
-Perform L<C<trusted-forwarder.org>|http://www.trusted-forwarder.org>
-accreditation checking.
+Perform C<trusted-forwarder.org> accreditation checking.
 
 =item B<--guess> I<spf-terms>
 
@@ -187,8 +186,11 @@ MXes: C<mx:mydomain.example.org>.
 =item B<--fallback> I<domain>B<=>I<spf-record>
 
 Set overrides and fallbacks.  Each option can be specified multiple times.  For
-example: C<--override example.org='v=spf1 -all' --override
-'*.example.net'='v=spf1 a mx -all' --fallback example.com='v=spf1 -all'>.
+example:
+
+    --override example.org='v=spf1 -all'
+    --override '*.example.net'='v=spf1 a mx -all'
+    --fallback example.com='v=spf1 -all'
 
 =back
 

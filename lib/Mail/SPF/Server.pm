@@ -2,9 +2,9 @@
 # Mail::SPF::Server
 # Server class for processing SPF requests.
 #
-# (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Server.pm 38 2006-12-14 00:27:08Z Julian Mehnle $
+# $Id: Server.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -283,6 +283,7 @@ sub select_record {
     # Query for SPF type records first, then fall back to TXT type records.
     
     my @records;
+    my @dns_errors;
     
     # Query for SPF type RRs first:
     try {
@@ -293,10 +294,13 @@ sub select_record {
                 $packet, 'SPF', \@versions, $scope, $domain)
         );
     }
-    catch Mail::SPF::EDNSTimeout with {
-        # FIXME Ignore DNS time-outs on SPF type lookups?
-        # Apparrently some brain-dead DNS servers time out on SPF-type queries.
+    catch Mail::SPF::EDNSError with {
+        push(@dns_errors, shift);
     };
+    #catch Mail::SPF::EDNSTimeout with {
+    #    # FIXME Ignore DNS time-outs on SPF type lookups?
+    #    # Apparrently some brain-dead DNS servers time out on SPF-type queries.
+    #};
     
     if (not @records) {
         # No usable SPF-type RRs, try TXT-type RRs.
@@ -311,13 +315,22 @@ sub select_record {
         #   type records where a result of "None" would normally be returned
         #   under a strict interpretation of RFC 4406.
         
-        my $packet = $self->dns_lookup($domain, 'TXT');
-        push(
-            @records,
-            $self->get_acceptable_records_from_packet(
-                $packet, 'TXT', \@versions, $scope, $domain)
-        );
+        try {
+            my $packet = $self->dns_lookup($domain, 'TXT');
+            push(
+                @records,
+                $self->get_acceptable_records_from_packet(
+                    $packet, 'TXT', \@versions, $scope, $domain)
+            );
+        }
+        catch Mail::SPF::EDNSError with {
+            push(@dns_errors, shift);
+        };
     }
+    
+    @dns_errors < 2
+        or $dns_errors[0]->throw;
+        # Unless at least one query succeeded, re-throw the first DNS error that occurred.
     
     @records
         or throw Mail::SPF::Result::None($self, $request,

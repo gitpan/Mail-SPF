@@ -2,9 +2,9 @@
 # Mail::SPF::MacroString
 # SPF record macro string class.
 #
-# (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: MacroString.pm 30 2006-11-27 19:55:10Z Julian Mehnle $
+# $Id: MacroString.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -18,6 +18,8 @@ Mail::SPF::MacroString - SPF record macro string class
 
 use warnings;
 use strict;
+
+use utf8;  # Hack to keep Perl 5.6 from whining about /[\p{}]/.
 
 use base 'Mail::SPF::Base';
 

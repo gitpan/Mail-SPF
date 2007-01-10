@@ -1,8 +1,8 @@
 #
 # Module::Build build script for Mail::SPF
 #
-# (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
-# $Id: Build.PL 36 2006-12-09 19:01:46Z Julian Mehnle $
+# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# $Id: Build.PL 40 2007-01-10 00:00:42Z Julian Mehnle $
 #
 ##############################################################################
 

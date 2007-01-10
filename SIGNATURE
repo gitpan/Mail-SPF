@@ -14,51 +14,51 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 7b635f1de240e6c3a2f8f829651ef99411775ba4 Build.PL
-SHA1 9b9aecd4092d261163cbab2d71551b336673a41a CHANGES
+SHA1 5c75a6e3e78a748c02fa56788ce84127079c6c1b Build.PL
+SHA1 222fa717468b7cde0152e9b5160f06301adfdf12 CHANGES
 SHA1 1790c2182e13ecb854a9c97b56294e0ace10f340 INSTALL
-SHA1 95c534597a9eb84d43f72813ce5367820bca64fc LICENSE
+SHA1 7c4648aef5dcb75e76e6ba9ccbffc548c4e67ec5 LICENSE
 SHA1 2afb3b454f5f62560257fed2d0961d5f800b8850 MANIFEST
-SHA1 ce3631dc2c6ba25b80d93ca2a0417fed26b4a824 META.yml
+SHA1 4b67a82f31700f24170032fb38a7352c4c1238d4 META.yml
 SHA1 937988dec2b580451bf071d2ac85dec3900a7c66 Makefile.PL
-SHA1 61b21348a252eed79a9362a409683d31bd0c9bdf README
+SHA1 d3b3ccce74cf35a53f85efe0952b3ba3558be526 README
 SHA1 9f0f97a3e04060e81979d3b1bff188befd9023fc TODO
-SHA1 df18f7ca73883b64fb57f5f7385b02591aaaefb7 bin/spfquery
-SHA1 6bf731da38dc2d0eabc7b45df44c4b9dae1b9fc3 debian/changelog
+SHA1 cf983258ca7bf3f768ae36ff1871aa926e0cdc88 bin/spfquery
+SHA1 bc94ed7d1813dbf610eba6958f3fbde0578b8938 debian/changelog
 SHA1 5d9474c0309b7ca09a182d888f73b37a8fe1362c debian/compat
-SHA1 94731fb93f7ad86fc15d70a7902082c5a1840090 debian/control
-SHA1 969236c9034b639ae1ec273047340b59252d1728 debian/copyright
+SHA1 4ce4ccb8fb73a9aab46c927aa2fa81418ec61155 debian/control
+SHA1 244154a4be032639bd319a46008256b0d8f12eb1 debian/copyright
 SHA1 82e3b9428f66ec70a7479f83e4407ee557c2c006 debian/libmail-spf-perl.install
 SHA1 7c255c487967dfd2caa599b7c6280f451b74c0fd debian/rules
 SHA1 23d8dc8e413e5fd67a56333f239fdb66e1d4c683 debian/spf-tools-perl.install
 SHA1 980ccf36df71948ef31330ad5da939c3f2225355 debian/spf-tools-perl.postinst
 SHA1 2ab3b93b8b96b9cc817ef3ce945c9df4ddd01ff7 debian/spf-tools-perl.prerm
-SHA1 e31f0455d706d567e2a7084680991083d5ce948d lib/Mail/SPF.pm
-SHA1 a18ff023164c4cbb3ba182a4df99f0b4f0775e9f lib/Mail/SPF/Base.pm
+SHA1 99a76c1db51cab07dc12a35c1cd261eb7635855a lib/Mail/SPF.pm
+SHA1 e978f062c660d568a2a7b7519e975d849063cc9c lib/Mail/SPF/Base.pm
 SHA1 438ad18b54c989d4c51d18c08989f002167e2e86 lib/Mail/SPF/Exception.pm
-SHA1 05cbcc410fea693e4958564323b0f619b73746d5 lib/Mail/SPF/MacroString.pm
-SHA1 2944b9b8fc218abd30fe75e130227b32961edb90 lib/Mail/SPF/Mech.pm
-SHA1 944b7b92323f136e3b940034e22fdda1ddd1a6cf lib/Mail/SPF/Mech/A.pm
-SHA1 e830adf6bc05ba6bc590dfa78503eece64963858 lib/Mail/SPF/Mech/All.pm
-SHA1 23b4c41d700df450c266208eb34b657ba867b0bb lib/Mail/SPF/Mech/Exists.pm
-SHA1 ce7a6b5b4fd4268f2dcf74527633c03efd8a84fe lib/Mail/SPF/Mech/IP4.pm
-SHA1 e8c99d0fa0398b20fc831c2c06ae7656778161c0 lib/Mail/SPF/Mech/IP6.pm
-SHA1 e8c466ce854a0cfd2ae757e66cc6f9826fa9f73b lib/Mail/SPF/Mech/Include.pm
-SHA1 820f7000b5f69c3be749d97fe555dab810fb22f6 lib/Mail/SPF/Mech/MX.pm
-SHA1 3dd2abd733d78395e7f3d07863f1fd70195287b8 lib/Mail/SPF/Mech/PTR.pm
-SHA1 4c9a2f51e2215a37df831acd08791da10751569f lib/Mail/SPF/Mod.pm
-SHA1 00226eb2c4fa16147aa335f2eea410ce294cba2e lib/Mail/SPF/Mod/Exp.pm
-SHA1 e6ad6f65fd32253a67cd875cf6abee2cb5bf8451 lib/Mail/SPF/Mod/Redirect.pm
-SHA1 9c1d74f6dbc66af21ee6636666c74dd99e8af98a lib/Mail/SPF/Record.pm
-SHA1 30e9210ea79323e99a3bc427d406dfb48dce3d1f lib/Mail/SPF/Request.pm
-SHA1 9382a2d5a82bfe9b2ff5f92ddfedf2b0eaf9f9ca lib/Mail/SPF/Result.pm
-SHA1 cafe53c3d149377f3ed065b61b35994770b50bf0 lib/Mail/SPF/SenderIPAddrMech.pm
-SHA1 644c3b45c58d4294780d102d558d00ecc6d29898 lib/Mail/SPF/Server.pm
-SHA1 713dd5b7e7a15fdf6736ef48c3aca81e009cc70f lib/Mail/SPF/Term.pm
-SHA1 4e8c256f785f8616319cbc98383468a281862631 lib/Mail/SPF/Util.pm
-SHA1 bfc2fb02c7ee9833f63802c42defe6066a061f94 lib/Mail/SPF/v1/Record.pm
-SHA1 4e135cab3de575e807bc74d980113849ba1ee885 lib/Mail/SPF/v2/Record.pm
-SHA1 e5a17feb6a02e46b1c23ae5b4b574a3a69fab9db sbin/spfd
+SHA1 3f3db8bed6df801bf1135317f4046c4b27f7ad53 lib/Mail/SPF/MacroString.pm
+SHA1 10f8c0a77e2edd3a721f81e4fd55063b4beede11 lib/Mail/SPF/Mech.pm
+SHA1 7cf32b63ec65c8359bb2fcbdf26c5a67f54ca282 lib/Mail/SPF/Mech/A.pm
+SHA1 1df0cac05f8e2ea188c11c980c083616989bac8f lib/Mail/SPF/Mech/All.pm
+SHA1 05a50a3f4bd96065bbf08b0a52e768ce083e7d72 lib/Mail/SPF/Mech/Exists.pm
+SHA1 e08112496431d870ea22ab91d5cf805025e5b579 lib/Mail/SPF/Mech/IP4.pm
+SHA1 ef55a6ee9d9ef994d745254b4acf1746ffa8effb lib/Mail/SPF/Mech/IP6.pm
+SHA1 4a9850bfead6becea34c2b0d4899aff6d342e91c lib/Mail/SPF/Mech/Include.pm
+SHA1 de17de1b5a9bccb4ba04e8ac18099ca83ea19f73 lib/Mail/SPF/Mech/MX.pm
+SHA1 b06263c0ae17e806ed281d6e5b8235e45ba3925e lib/Mail/SPF/Mech/PTR.pm
+SHA1 2aeaa6780180ec2613082e4a691be94a2693262f lib/Mail/SPF/Mod.pm
+SHA1 783f66a628c6ddd759afbbd50569d87e8cd5a758 lib/Mail/SPF/Mod/Exp.pm
+SHA1 735946b970614eef0a2f78a24c2dd877f462c769 lib/Mail/SPF/Mod/Redirect.pm
+SHA1 9ee895eee85b3383d3f123a45ad8269e723d60a6 lib/Mail/SPF/Record.pm
+SHA1 8d550bcc97e0daa9fa8222f267af46e91d05f13a lib/Mail/SPF/Request.pm
+SHA1 2836b08ca4bb53d0cf01e6818c0d79f669f70104 lib/Mail/SPF/Result.pm
+SHA1 592255076866b506c135479e4cceb07f56e34162 lib/Mail/SPF/SenderIPAddrMech.pm
+SHA1 3b1eb4e206efdab2d55d362db11e8c136d4c7973 lib/Mail/SPF/Server.pm
+SHA1 32ed6c529c8478263a0ef40753d236f325f80209 lib/Mail/SPF/Term.pm
+SHA1 39f41bd5cb60702aba642079ee8979f9dfc237b2 lib/Mail/SPF/Util.pm
+SHA1 d8f8a50f4576e72bef53f04916c34d04a4839c8e lib/Mail/SPF/v1/Record.pm
+SHA1 1b45920bf5aba54c4d8226800a99e086216b7718 lib/Mail/SPF/v2/Record.pm
+SHA1 2088f2fb5f926b3a1aaffeb20aa3ed9ec91f5d48 sbin/spfd
 SHA1 cf2bcbc82699a16c94dd4dd1ea8995ae3f6ebb0a t/00.00-class-misc.t
 SHA1 02440ba66024d878b78e3331f980a19764b43b60 t/00.01-class-util.t
 SHA1 9829b6199e833b094a14516a260bc4dbb217ef41 t/00.02-class-request.t
@@ -75,7 +75,7 @@ SHA1 f36518bf560ef4cc1f331f6f0ab2a48224967217 t/rfc4408-tests.yml
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.5 (GNU/Linux)
 
-iD8DBQFFgJrNwL7PKlBZWjsRAvSuAJ0X0Qt3Ex4FBHmdstd1+D6yy/w80ACeMvxp
-ShzoCvvT1IzAeRfZ3O/O6Zw=
-=/6FW
+iD8DBQFFpCzJwL7PKlBZWjsRAreTAJ42wk8LX0JXsqLJ47Vcou3YEqsd6ACeKZvM
+t6fpNKnc1Jfn/HE7uyJJ24k=
+=yMYf
 -----END PGP SIGNATURE-----

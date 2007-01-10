@@ -1,3 +1,22 @@
+mail-spf-perl (2.003) unstable; urgency=low
+
+  Mail::SPF:
+  * Fixed two Perl 5.6 incompatibilities:
+    * Added `use utf8` statements in several modules to keep Perl 5.6 from
+      whining about /[\p{}]/.
+    * Do not use the `use constant { a=>1, b=>2 }` multiple-constants idiom,
+      as it was introduced only in constant 1.03 (Perl 5.7.2).
+  * Fixed a very minor bug where a "TempError" result would incorrectly be
+    returned in the very rare case when the SPF-type look-up succeeded but
+    returned 0 records, and the following TXT-type look-up errored or timed
+    out.  Now a "None" result is correctly returned in that case as demanded
+    by RFC 4408.
+
+  spfquery:
+  * Minor documentation fixes.
+
+ -- Julian Mehnle <julian@mehnle.net>  Wed, 10 Jan 2007 00:00:00 +0000
+
 mail-spf-perl (2.002) unstable; urgency=low
 
   Mail::SPF:

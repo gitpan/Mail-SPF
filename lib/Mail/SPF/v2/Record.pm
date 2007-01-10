@@ -2,9 +2,9 @@
 # Mail::SPF::v2::Record
 # Sender ID ("spf2.0") record class.
 #
-# (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Record.pm 28 2006-11-19 20:58:45Z Julian Mehnle $
+# $Id: Record.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
 #
 ##############################################################################
 

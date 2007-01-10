@@ -2,9 +2,9 @@
 # Mail::SPF::Mod::Redirect
 # SPF record "redirect" modifier class.
 #
-# (C) 2005-2006 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Redirect.pm 36 2006-12-09 19:01:46Z Julian Mehnle $
+# $Id: Redirect.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
 #
 ##############################################################################
 
