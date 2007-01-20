@@ -3,7 +3,7 @@
 # SPF result class.
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
-# $Id: Result.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: Result.pm 42 2007-01-20 01:17:05Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -352,7 +352,7 @@ sub received_spf_header {
     my $identity_key_name =
         $self->received_spf_header_identity_key_names_by_scope->{$self->{request}->scope};
     my @info_pairs = (
-        receiver            => $self->{server}->hostname,
+        receiver            => $self->{server}->hostname || 'unknown',
         identity            => $self->{request}->scope,
         $identity_key_name  => $self->{request}->identity,
         (
@@ -450,14 +450,34 @@ use constant code => 'fail';
 
 sub authority_explanation {
     my ($self) = @_;
-    return $self->{authority_explanation}
-        if defined($self->{authority_explanation});
-    try {
-        $self->{authority_explanation} = $self->{request}->state('authority_explanation')->expand;
+    my $authority_explanation = $self->{authority_explanation};
+    
+    return $authority_explanation
+        if defined($authority_explanation);
+    
+    my $server  = $self->{server};
+    my $request = $self->{request};
+    
+    my $authority_explanation_macrostring = $request->state('authority_explanation');
+    
+    # If an explicit explanation was specified by the authority domain...
+    if (defined($authority_explanation_macrostring)) {
+        try {
+            # ... then try to expand it:
+            $authority_explanation = $authority_explanation_macrostring->expand;
+        }
+        catch Mail::SPF::EInvalidMacroString with {};
+            # Ignore expansion errors and leave authority explanation undefined.
     }
-    catch Mail::SPF::EInvalidMacroString with {};
-        # Ignore expansion errors and leave authority expansion undefined.
-    return $self->{authority_explanation};
+    
+    # If no authority explanation could be determined so far...
+    if (not defined($authority_explanation)) {
+        # ... then use the server's default authority explanation:
+        $authority_explanation =
+            $server->default_authority_explanation->new(request => $request)->expand;
+    }
+    
+    return $self->{authority_explanation} = $authority_explanation;
 }
 
 package Mail::SPF::Result::SoftFail;

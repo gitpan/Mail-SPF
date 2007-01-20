@@ -4,7 +4,7 @@
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Request.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: Request.pm 42 2007-01-20 01:17:05Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -174,9 +174,9 @@ I<Required>.  A string denoting the sender identity whose authorization should
 be checked.  This is a domain name for the C<helo> scope, and an e-mail address
 for the C<mfrom> and C<pra> scopes.
 
-I<Note>:  For checks with the C<mfrom> scope, in the case of an empty C<MAIL
-FROM> SMTP transaction parameter, the caller must provide to Mail::SPF::Request
-the C<HELO> transaction parameter instead.
+I<Note>:  An empty identity must not be passed.  In the case of an empty C<MAIL
+FROM> SMTP transaction parameter, you should perform a check with the C<helo>
+scope instead.
 
 =item B<ip_address>
 
@@ -255,6 +255,8 @@ sub new {
     # Identity:
     defined($self->{identity})
         or throw Mail::SPF::EOptionRequired("Missing required 'identity' option");
+    length($self->{identity})
+        or throw Mail::SPF::EInvalidOptionValue("'identity' option must not be empty");
     
     # Extract domain and localpart from identity:
     if (

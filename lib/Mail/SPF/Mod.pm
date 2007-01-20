@@ -4,7 +4,7 @@
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Mod.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: Mod.pm 42 2007-01-20 01:17:05Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -290,7 +290,7 @@ implementation in sub-classes.  Takes both a I<Mail::SPF::Server> and a
 I<Mail::SPF::Request> object.  As global modifiers are generally processed
 I<before> an SPF result has been determined, no result object is available to
 the modifier.  The modifier can (at least at this time) not directly modify the
-final SPF result, however it may throw an exception to signify an error
+final SPF result, however it may throw an exception to signal an error
 condition.
 
 This method is abstract and must be implemented by sub-classes of

@@ -1,3 +1,26 @@
+mail-spf-perl (2.004) unstable; urgency=low
+
+  Mail::SPF:
+  * Correctly fall back to default authority explanation if the authority
+    domain does specify an explanation string but it cannot be expanded (e.g.
+    due to syntax errors).
+  * In Mail::SPF::Result::received_spf_header(), gracefully fall back to a
+    hostname of "unknown" if a fully qualified hostname can not be determined.
+    Some (misconfigured) systems simply will not reveal one.
+  * Minor documentation improvements and fixes.
+
+  Miscellaneous:
+  * Note in the README file that we pass the 2006.11 release of the official
+    RFC 4408 test-suite.
+
+  Tests:
+  * Do not test Mail::SPF::Util::hostname(), as some (misconfigured) systems
+    simply will not reveal a fully qualified hostname (see CPANTS tests for
+    2.003).
+  * Minor code clean-up.
+
+ -- Julian Mehnle <julian@mehnle.net>  Sat, 20 Jan 2007 02:00:00 +0000
+
 mail-spf-perl (2.003) unstable; urgency=low
 
   Mail::SPF:

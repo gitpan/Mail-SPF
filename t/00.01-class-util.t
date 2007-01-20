@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use blib;
 
-use Test::More tests => 16;
+use Test::More tests => 15;
 
 my $ipv4_address          = NetAddr::IP->new('192.168.0.1');
 my $ipv6_address_v4mapped = NetAddr::IP->new('::ffff:192.168.0.1');
@@ -16,10 +16,8 @@ BEGIN { use_ok('Mail::SPF::Util') }
 
 #### hostname() ####
 
-{
-    isnt(Mail::SPF::Util->hostname, undef,              'Mail::SPF::Util->hostname() defined');
-        # Can't really test hostname() any other way...
-}
+# We cannot really test Mail::SPF::Util->hostname, as on some systems it simply cannot get
+# a fully qualified hostname and thus returns undef.
 
 
 #### ipv4_address_to_ipv6() ####

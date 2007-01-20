@@ -4,6 +4,27 @@
 #   ! = Changed something significant, or removed a feature
 #   * = Fixed a bug, or made a minor improvement
 
+--- 2.004 (2007-01-20 02:00)
+
+  Mail::SPF:
+  * Correctly fall back to default authority explanation if the authority
+    domain does specify an explanation string but it cannot be expanded (e.g.
+    due to syntax errors).
+  * In Mail::SPF::Result::received_spf_header(), gracefully fall back to a
+    hostname of "unknown" if a fully qualified hostname can not be determined.
+    Some (misconfigured) systems simply will not reveal one.
+  * Minor documentation improvements and fixes.
+
+  Miscellaneous:
+  * Note in the README file that we pass the 2006.11 release of the official
+    RFC 4408 test-suite.
+
+  Tests:
+  * Do not test Mail::SPF::Util::hostname(), as some (misconfigured) systems
+    simply will not reveal a fully qualified hostname (see CPANTS tests for
+    2.003).
+  * Minor code clean-up.
+
 --- 2.003 (2007-01-10 00:00)
 
   Mail::SPF:
@@ -47,5 +68,5 @@
 
 --- 2.000 (initial release) (2005-06-23 00:00)
 
-# $Id: CHANGES 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: CHANGES 42 2007-01-20 01:17:05Z Julian Mehnle $
 # vim:tw=79 sts=2 sw=2

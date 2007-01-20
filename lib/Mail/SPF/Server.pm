@@ -4,7 +4,7 @@
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Server.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: Server.pm 42 2007-01-20 01:17:05Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -194,8 +194,7 @@ details.
 sub process {
     my ($self, $request) = @_;
     
-    my $authority_explanation = $self->{default_authority_explanation}->new(request => $request);
-    $request->state('authority_explanation', $authority_explanation);
+    $request->state('authority_explanation', undef);
     $request->state('dns_interactive_terms_count', 0);
     
     my $result;

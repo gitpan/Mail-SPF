@@ -2,8 +2,6 @@ use strict;
 use warnings;
 use blib;
 
-use lib '/home/julian/source/spf/software/mail-spf-test-perl/trunk/lib';
-
 use Test::More;
 
 eval("use Mail::SPF::Test");
