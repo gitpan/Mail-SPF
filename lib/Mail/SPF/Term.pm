@@ -4,7 +4,7 @@
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Term.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: Term.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -26,6 +26,8 @@ use base 'Mail::SPF::Base';
 use overload
     '""'        => 'stringify',
     fallback    => 1;
+
+use NetAddr::IP;
 
 use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;

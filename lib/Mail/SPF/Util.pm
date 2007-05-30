@@ -4,7 +4,7 @@
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Util.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: Util.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -57,11 +57,10 @@ use constant ipv4_mapped_ipv6_address_pattern =>
     $reverse_name       = Mail::SPF::Util->ip_address_reverse($ip_address);
     
     $validated_domain = Mail::SPF::Util->valid_domain_for_ip_address(
-        Mail::SPF::Server->new(),
-        $ip_address,
-        $domain,
-        $find_best_match,   # defaults to false
-        $accept_any_domain  # defaults to false
+        $spf_server, $request,
+        $ip_address, $domain,
+        $find_best_match,       # defaults to false
+        $accept_any_domain      # defaults to false
     );
 
 =cut
@@ -203,7 +202,7 @@ sub ip_address_reverse {
     }
 }
 
-=item B<valid_domain_for_ip_address($server, $ip_address, $domain,
+=item B<valid_domain_for_ip_address($server, $request, $ip_address, $domain,
 $find_best_match = false, $accept_any_domain = false)>:
 returns I<string> or B<undef>
 
@@ -211,8 +210,8 @@ Finds a valid domain name for the given I<NetAddr::IP> IP address that matches
 the given domain or a sub-domain thereof.  A domain name is valid for the given
 IP address if the IP address reverse-maps to that domain name in DNS, and the
 domain name in turn forward-maps to the IP address.  Uses the given
-I<Mail::SPF::Server> object to perform DNS lookups.  Returns the validated
-domain name.
+I<Mail::SPF::Server> and I<Mail::SPF::Request> objects to perform DNS look-ups.
+Returns the validated domain name.
 
 If C<$find_best_match> is B<true>, the one domain name is selected that best
 matches the given domain name, preferring direct matches over sub-domain
@@ -230,13 +229,14 @@ use constant valid_domain_match_subdomain   => 1;
 use constant valid_domain_match_identical   => 2;
 
 sub valid_domain_for_ip_address {
-    my ($self, $server, $ip_address, $domain, $find_best_match, $accept_any_domain) = @_;
+    my ($self, $server, $request, $ip_address, $domain, $find_best_match, $accept_any_domain) = @_;
     
     my $addr_rr_type    = $ip_address->version == 4 ? 'A' : 'AAAA';
     
     my $reverse_ip_name = $self->ip_address_reverse($ip_address);
     my $ptr_packet      = $server->dns_lookup($reverse_ip_name, 'PTR');
-    my @ptr_rrs         = $ptr_packet->answer;
+    my @ptr_rrs         = $ptr_packet->answer
+        or $server->count_void_dns_lookup($request);
     
     # Respect the PTR mechanism lookups limit (RFC 4408, 5.5/3/4):
     @ptr_rrs = splice(@ptr_rrs, 0, $server->max_name_lookups_per_ptr_mech)
@@ -269,7 +269,9 @@ sub valid_domain_for_ip_address {
             
             try {
                 my $addr_packet = $server->dns_lookup($ptr_domain, $addr_rr_type);
-                foreach my $addr_rr ($addr_packet->answer) {
+                my @addr_rrs    = $addr_packet->answer
+                    or $server->count_void_dns_lookup($request);
+                foreach my $addr_rr (@addr_rrs) {
                     if ($addr_rr->type eq $addr_rr_type) {
                         $is_valid_domain = TRUE, last
                             if $ip_address == NetAddr::IP->new($addr_rr->address);
@@ -280,6 +282,10 @@ sub valid_domain_for_ip_address {
                         # A CNAME (which has hopefully been resolved by the server
                         # for us already), or an address RR of an unrequested type.
                         # Silently ignore any of those.
+                        # FIXME Silently ignoring address RRs of an "unrequested"
+                        # FIXME type poses a disparity with how the "ip{4,6}", "a",
+                        # FIXME and "mx" mechanisms tolerantly handle alien but
+                        # FIXME convertible IP address types.
                     }
                     else {
                         # Unexpected RR type.

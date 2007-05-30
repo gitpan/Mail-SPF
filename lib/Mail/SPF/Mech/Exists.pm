@@ -4,7 +4,7 @@
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Exists.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: Exists.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -135,10 +135,15 @@ details.
 
 sub match {
     my ($self, $server, $request) = @_;
+    
     $server->count_dns_interactive_term($request);
+    
     my $domain = $self->domain($server, $request);
     my $packet = $server->dns_lookup($domain, 'A');
-    foreach my $rr ($packet->answer) {
+    my @rrs    = $packet->answer
+        or $server->count_void_dns_lookup($request);
+    
+    foreach my $rr (@rrs) {
         return TRUE
             if $rr->type eq 'A';
     }

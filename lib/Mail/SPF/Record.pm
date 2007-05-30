@@ -4,7 +4,7 @@
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Record.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: Record.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -326,14 +326,15 @@ sub terms {
 
 =item B<global_mods>: returns I<list> of I<Mail::SPF::GlobalMod>
 
-Returns a list of the global modifiers of the record.  See the description of
-the L</new> constructor's C<global_mods> option.
+Returns a list of the global modifiers of the record, ordered ascending by
+modifier precedence.  See the description of the L</new> constructor's
+C<global_mods> option.
 
 =cut
 
 sub global_mods {
     my ($self) = @_;
-    return values(%{$self->{global_mods}});
+    return sort { $a->precedence <=> $b->precedence } values(%{$self->{global_mods}});
 }
 
 =item B<global_mod($mod_name)>: returns I<Mail::SPF::GlobalMod>
@@ -391,7 +392,6 @@ sub eval {
                     my $result = $result_class->new($server, $request, "Mechanism '$term' matched");
                     $mech->explain($server, $request, $result);
                     $result->throw();
-                    #throw $result_class($request, "Mechanism '$term' matched");
                 }
             }
             elsif ($term->isa('Mail::SPF::PositionalMod')) {
@@ -416,11 +416,8 @@ sub eval {
     catch Mail::SPF::Result with {
         my ($result) = @_;
         
-        # Process global modifiers:
+        # Process global modifiers in ascending order of precedence:
         foreach my $global_mod ($self->global_mods) {
-            # TODO Possibly exempt "redirect" modifier and perform last?
-            # TODO Or, a "priority" property could be introduced for global modifiers.
-            # TODO See TODO file.
             $global_mod->process($server, $request, $result);
         }
         

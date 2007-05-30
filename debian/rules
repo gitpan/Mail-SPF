@@ -31,7 +31,7 @@ install-stamp: build-stamp
 	dh_clean -k
 	
 	$(BUILD) test
-	$(BUILD) install destdir=$(TMP)
+	$(BUILD) install destdir=$(TMP) create_packlist=0
 	
 	# Manually create man-pages for sbin/ executables:
 	mkdir -p $(TMP)/usr/share/man/man8

@@ -4,7 +4,7 @@
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Mech.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: Mech.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -119,7 +119,6 @@ sub new {
         or throw Mail::SPF::EAbstractClass;
     $self = $self->SUPER::new(%options);
     $self->{parse_text} = $self->{text} if not defined($self->{parse_text});
-    #$self->{qualifier} ||= $self->default_qualifier;  # Defaulting already happens in qualifier().
     $self->{domain_spec} = Mail::SPF::MacroString->new(text => $self->{domain_spec})
         if  defined($self->{domain_spec})
         and not UNIVERSAL::isa($self->{domain_spec}, 'Mail::SPF::MacroString');
@@ -335,13 +334,15 @@ sub match_in_domain {
     $domain = $self->domain($server, $request)
         if not defined($domain);
     
-    my $ipv4_prefix_length  = $self->ipv4_prefix_length;
-    my $ipv6_prefix_length  = $self->ipv6_prefix_length;
-    my $addr_rr_type        = $request->ip_address->version == 4 ? 'A' : 'AAAA';
+    my $ipv4_prefix_length = $self->ipv4_prefix_length;
+    my $ipv6_prefix_length = $self->ipv6_prefix_length;
+    my $addr_rr_type       = $request->ip_address->version == 4 ? 'A' : 'AAAA';
     
-    my $packet = $server->dns_lookup($domain, $addr_rr_type);
-    defined($packet) or next;
-    foreach my $rr ($packet->answer) {
+    my $packet             = $server->dns_lookup($domain, $addr_rr_type);
+    my @rrs                = $packet->answer
+        or $server->count_void_dns_lookup($request);
+    
+    foreach my $rr (@rrs) {
         if ($rr->type eq 'A') {
             my $network = NetAddr::IP->new($rr->address, $ipv4_prefix_length);
             return TRUE

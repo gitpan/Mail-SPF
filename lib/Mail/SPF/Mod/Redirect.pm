@@ -4,7 +4,7 @@
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Redirect.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: Redirect.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -27,6 +27,8 @@ use constant FALSE  => not TRUE;
 
 use constant name           => 'redirect';
 use constant name_pattern   => qr/${\name}/i;
+
+use constant precedence     => 0.8;
 
 =head1 DESCRIPTION
 
@@ -76,6 +78,10 @@ Returns B<'redirect'>.
 
 Returns a regular expression that matches a modifier name of B<'redirect'>.
 
+=item B<precedence>: returns I<real>
+
+Returns a precedence value of B<0.8>.  See L<Mail::SPF::Mod/precedence>.
+
 =back
 
 =head2 Instance methods
@@ -119,7 +125,7 @@ performs a recursive SPF check using the given SPF server and request objects
 and substituting the modifier's target domain name for the request's authority
 domain.  The result of the recursive SPF check is then thrown as the result of
 the current record's evaluation.  However, if the target domain has no
-acceptable SPF record, a "permerror" result is thrown.  See RFC 4408, 6.1, for
+acceptable SPF record, a C<permerror> result is thrown.  See RFC 4408, 6.1, for
 details.
 
 =cut

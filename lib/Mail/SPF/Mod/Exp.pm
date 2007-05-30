@@ -4,7 +4,7 @@
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Exp.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: Exp.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -32,6 +32,8 @@ use constant FALSE  => not TRUE;
 
 use constant name           => 'exp';
 use constant name_pattern   => qr/${\name}/i;
+
+use constant precedence     => 0.2;
 
 =head1 DESCRIPTION
 
@@ -79,6 +81,10 @@ Returns B<'exp'>.
 =item B<name_pattern>: returns I<Regexp>
 
 Returns a regular expression that matches a modifier name of B<'exp'>.
+
+=item B<precedence>: returns I<real>
+
+Returns a precedence value of B<0.2>.  See L<Mail::SPF::Mod/precedence>.
 
 =back
 

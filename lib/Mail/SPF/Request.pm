@@ -4,7 +4,7 @@
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Request.pm 42 2007-01-20 01:17:05Z Julian Mehnle $
+# $Id: Request.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -147,11 +147,12 @@ of the C<HELO> scope.
 =item B<'mfrom'>
 
 The given identity is the C<MAIL FROM> parameter of an SMTP transaction (RFC
-2821), or, in the case of an empty C<MAIL FROM> parameter (C<< MAIL FROM:<>
->>), derived from the transaction's C<HELO> parameter, and should be checked
-against SPF records that cover the C<mfrom> scope (C<v=spf1> and
-C<spf2.0/mfrom>).  See the SPFv1 specification (RFC 4408) for the formal
-definition of the C<MAIL FROM> scope.
+2821), and should be checked against SPF records that cover the C<mfrom> scope
+(C<v=spf1> and C<spf2.0/mfrom>).  See the SPFv1 specification (RFC 4408) for
+the formal definition of the C<MAIL FROM> scope.
+
+I<Note>:  In the case of an empty C<MAIL FROM> SMTP transaction parameter (C<<
+MAIL FROM:<> >>), you should perform a check with the C<helo> scope instead.
 
 =item B<'pra'>
 

@@ -4,7 +4,7 @@
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: MX.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: MX.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -173,7 +173,8 @@ sub match {
     
     my $target_domain = $self->domain($server, $request);
     my $mx_packet     = $server->dns_lookup($target_domain, 'MX');
-    my @mx_rrs        = $mx_packet->answer;
+    my @mx_rrs        = $mx_packet->answer
+        or $server->count_void_dns_lookup($request);
     
     # Respect the MX mechanism lookups limit (RFC 4408, 5.4/3/4):
     @mx_rrs = splice(@mx_rrs, 0, $server->max_name_lookups_per_mx_mech)

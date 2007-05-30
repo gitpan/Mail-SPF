@@ -1,3 +1,38 @@
+mail-spf-perl (2.005) unstable; urgency=low
+
+  Debian:
+  * Conflicts: spfquery (<< 1.2.5.dfsg-1) (was unversioned)
+
+  Mail::SPF:
+  + Added a "max_void_dns_lookups" option to Mail::SPF::Server's constructor,
+    allowing the number of potentially abusive lookups induced by DoS attacks
+    to be limited.  See the documentation of the Mail::SPF::Server class.
+  + Added a "precedence" class property to Mail::SPF::GlobalMod and sub-classes
+    that defines the order in which global modifiers are to be processed
+    (0: first, 1: last).  See Mail::SPF::Mod.
+    Mail::SPF::Mod::Exp has precedence 0.2, Mail::SPF::Mod::Redirect has 0.8.
+    Also, Mail::SPF::Record::global_mods() now returns modifiers ordered by
+    precedence.
+  + Added support for a non-standard %{_scope} pseudo macro that expands to the
+    request's identity scope.  Note: Do NOT use any such non-standard macros in
+    explanation strings published in DNS!
+  ! Mail::SPF::Util::valid_domain_for_ip_address() now requires a Mail::SPF::
+    Request object to be passed as a new second argument.  This is actually
+    consistent with many of Mail::SPF's methods.  Please excuse the late API
+    change (but who uses Mail::SPF::Util directly anyway?).
+  * Updated default authority explanation string to include identity scope in
+    the openspf.org "Why?" page URL in order to avoid misleading result
+    explanations.
+  * Truncate labels resulting from macro expansions to 63 bytes.  This is not
+    strictly required by RFC 4408, 8.1/27, but is merely meant as a precaution.
+  * Minor documentation fixes and improvements.
+
+  Miscellaneous:
+  * We pass (and include) the 2007.05 release of the official RFC 4408 test
+    suite (no changes were required).
+
+ -- Julian Mehnle <julian@mehnle.net>  Wed, 30 May 2007 23:00:00 +0000
+
 mail-spf-perl (2.004) unstable; urgency=low
 
   Mail::SPF:
@@ -55,16 +90,17 @@ mail-spf-perl (2.002) unstable; urgency=low
 
 mail-spf-perl (2.001) unstable; urgency=low
 
-  > Gold Release!
-  > Major overhaul:
-    ! Major code refactoring, achieving full RFC 4408/4406 compliance, and
-      breaking API compatibility with 2.000.
-    ! Switched from ExtUtils::MakeMaker to Module::Build.
-    + Added complete rewrites of spfquery (2.500) and spfd (2.000).
-    + Added complete documentation.
-    + Added unit tests and the RFC 4408 test-suite.
-    + Added Debian package control files.
-    + And more... (closes: rt.cpan.org #20821, #20822, #21922, #21925)
+  Gold Release!
+
+  Major overhaul:
+  ! Major code refactoring, achieving full RFC 4408/4406 compliance, and
+    breaking API compatibility with 2.000.
+  ! Switched from ExtUtils::MakeMaker to Module::Build.
+  + Added complete rewrites of spfquery (2.500) and spfd (2.000).
+  + Added complete documentation.
+  + Added unit tests and the RFC 4408 test-suite.
+  + Added Debian package control files.
+  + And more... (closes: rt.cpan.org #20821, #20822, #21922, #21925)
 
  -- Julian Mehnle <julian@mehnle.net>  Sat,  9 Dec 2006 20:00:00 +0000
 

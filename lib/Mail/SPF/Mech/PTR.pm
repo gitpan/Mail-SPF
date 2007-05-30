@@ -4,7 +4,7 @@
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: PTR.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: PTR.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -22,8 +22,6 @@ use strict;
 use base 'Mail::SPF::SenderIPAddrMech';
 
 use Mail::SPF::Util;
-
-use NetAddr::IP;
 
 use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;
@@ -144,7 +142,7 @@ sub match {
     $server->count_dns_interactive_term($request);
     return
         Mail::SPF::Util->valid_domain_for_ip_address(
-            $server, $request->ip_address, $self->domain($server, $request))
+            $server, $request, $request->ip_address, $self->domain($server, $request))
         ? TRUE : FALSE;
 }
 

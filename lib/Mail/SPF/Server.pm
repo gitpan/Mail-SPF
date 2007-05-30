@@ -4,7 +4,7 @@
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Server.pm 42 2007-01-20 01:17:05Z Julian Mehnle $
+# $Id: Server.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -36,13 +36,15 @@ use constant record_classes_by_version => {
     2   => 'Mail::SPF::v2::Record'
 };
 
+use constant default_default_authority_explanation  =>
+    'Please see http://www.openspf.org/Why?s=%{_scope}&id=%{S}&ip=%{C}&r=%{R}';
+
 use constant default_max_dns_interactive_terms      => 10;  # RFC 4408, 10.1/6
 use constant default_max_name_lookups_per_term      => 10;  # RFC 4408, 10.1/7
 sub default_max_name_lookups_per_mx_mech  { shift->max_name_lookups_per_term };
 sub default_max_name_lookups_per_ptr_mech { shift->max_name_lookups_per_term };
 
-use constant default_default_authority_explanation  =>
-    'Please see http://www.openspf.org/Why?id=%{S}&ip=%{I}&receiver=%{R}';
+use constant default_max_void_dns_lookups           => undef;
 
 # Interface:
 ##############################################################################
@@ -52,9 +54,9 @@ use constant default_default_authority_explanation  =>
     use Mail::SPF;
     
     my $spf_server  = Mail::SPF::Server->new(
-        # Optional default for the authority explanation:
+        # Optional custom default for authority explanation:
         default_authority_explanation =>
-            'See http://www.%{d}/why/s=%{S};i=%{I};r=%{R}'
+            'See http://www.%{d}/why/id=%{S};ip=%{I};r=%{R}'
     );
     
     my $result      = $spf_server->process($request);
@@ -92,7 +94,11 @@ A I<string> denoting the default (not macro-expanded) authority explanation
 string to use if the authority domain does not specify an explanation string of
 its own.  Defaults to:
 
-    'Please see http://www.openspf.org/Why?id=%{S}&ip=%{I}&receiver=%{R}'
+    'Please see http://www.openspf.org/Why?s=%{_scope}&id=%{S}&ip=%{C}&r=%{R}'
+
+As can be seen from the default, a non-standard C<_scope> pseudo macro is
+supported that expands to the name of the identity's scope.  (Note: Do I<not>
+use any non-standard macros in explanation strings published in DNS.)
 
 =item B<hostname>
 
@@ -139,6 +145,23 @@ An I<integer> denoting the maximum number of DNS name look-ups per B<mx> or B<pt
 mechanism, respectively.  Defaults to the value of the C<max_name_lookups_per_term>
 option.  See there for additional information and security notes.
 
+=item B<max_void_dns_lookups>
+
+An I<integer> denoting the maximum number of "void" DNS look-ups per SPF check,
+i.e. the number of DNS look-ups that were caused by DNS-interactive terms and
+macros (as defined in RFC 4408, 10.1, paragraphs 6 and 7) and that are allowed
+to return an empty answer with RCODE 0 or RCODE 3 (C<NXDOMAIN>) before
+processing is aborted with a C<permerror> result.  If B<undef> is specified,
+there is no limit on the number of void DNS look-ups.  Defaults to B<undef>.
+
+Specifically, the DNS look-ups that are subject to this limit are those caused
+by the C<a>, C<mx>, C<ptr>, and C<exists> mechanisms and the C<p> macro.
+
+A value of B<2> is likely to prevent effective DoS attacks against third-party
+victim domains.  However, a definite limit may cause C<permerror> results even
+with certain (overly complex) innocent sender policies where useful results
+would normally be returned.
+
 =back
 
 =cut
@@ -169,6 +192,9 @@ sub new {
     $self->{max_name_lookups_per_ptr_mech}  = $self->default_max_name_lookups_per_ptr_mech
                                        if not exists($self->{max_name_lookups_per_ptr_mech});
     
+    $self->{max_void_dns_lookups}           = $self->default_max_void_dns_lookups
+                                       if not exists($self->{max_void_dns_lookups});
+    
     return $self;
 }
 
@@ -196,6 +222,7 @@ sub process {
     
     $request->state('authority_explanation', undef);
     $request->state('dns_interactive_terms_count', 0);
+    $request->state('void_dns_lookups_count', 0);
     
     my $result;
     try {
@@ -209,7 +236,10 @@ sub process {
     catch Mail::SPF::EDNSError with {
         $result = Mail::SPF::Result::TempError->new($self, $request, shift->text);
     }
-    catch Mail::SPF::ERecordSelectionError with {
+    catch Mail::SPF::ENoAcceptableRecord with {
+        $result = Mail::SPF::Result::None->new($self, $request, shift->text);
+    }
+    catch Mail::SPF::ERedundantAcceptableRecords with {
         $result = Mail::SPF::Result::PermError->new($self, $request, shift->text);
     }
     catch Mail::SPF::ESyntaxError with {
@@ -225,7 +255,9 @@ sub process {
 }
 
 =item B<select_record($request)>: returns I<Mail::SPF::Record>;
-throws I<Mail::SPF::ERecordSelectionError>, I<Mail::SPF::EDNSError>, I<Mail::SPF::ESyntaxError>
+throws I<Mail::SPF::EDNSError>,
+I<Mail::SPF::ENoAcceptableRecord>, I<Mail::SPF::ERedundantAcceptableRecords>,
+I<Mail::SPF::ESyntaxError>
 
 Queries the authority domain of the given I<Mail::SPF::Request> object for SPF
 sender policy records and, if multiple records are available, selects the
@@ -264,7 +296,7 @@ I<Mail::SPF::ERedundantAcceptableRecords> exception.
 =back
 
 I<Mail::SPF::EDNSError> exceptions due to DNS look-ups and
-I<Mail::SPF::ESyntaxError> exceptions due to an invalid acceptable record may
+I<Mail::SPF::ESyntaxError> exceptions due to invalid acceptable records may
 also be thrown.
 
 =cut
@@ -332,7 +364,7 @@ sub select_record {
         # Unless at least one query succeeded, re-throw the first DNS error that occurred.
     
     @records
-        or throw Mail::SPF::Result::None($self, $request,
+        or throw Mail::SPF::ENoAcceptableRecord(
             "No applicable sender policy available");  # RFC 4408, 4.5/7
     
     #STDERR->print("DEBUG: Acceptable records:\n");
@@ -351,7 +383,7 @@ sub select_record {
     #}
     
     @records == 1
-        or throw Mail::SPF::Result::PermError($self, $request,
+        or throw Mail::SPF::ERedundantAcceptableRecords(
             "Redundant applicable '" . $preferred_record_class->version_tag . "' " .
             "sender policies found");  # RFC 4408, 4.5/6
     
@@ -417,14 +449,16 @@ error (other than RCODE 3 AKA C<NXDOMAIN>) occurred.
 
 sub dns_lookup {
     my ($self, $domain, $rr_type) = @_;
-    #STDERR->print("DEBUG: DNS lookup: $domain $rr_type\n");
     
     if (UNIVERSAL::isa($domain, 'Mail::SPF::MacroString')) {
-        # Expand macro string, and truncate domain name if longer than 253 bytes (RFC 4408, 8.1/25):
         $domain = $domain->expand;
+        # Truncate overlong labels at 63 bytes (RFC 4408, 8.1/27):
+        $domain =~ s/([^.]{63})[^.]+/$1/g;
+        # Drop labels from the head of domain if longer than 253 bytes (RFC 4408, 8.1/25):
         $domain =~ s/^[^.]+\.(.*)$/$1/
             while length($domain) > 253;
     }
+    
     $domain =~ s/^(.*?)\.?$/\L$1/;  # Normalize domain.
     
     my $packet = $self->dns_resolver->send($domain, $rr_type);
@@ -472,6 +506,37 @@ sub count_dns_interactive_term {
     return;
 }
 
+=item B<count_void_dns_lookup($request)>: throws I<Mail::SPF::EProcessingLimitExceeded>
+
+Increments by one the count of "void" DNS look-ups that have occurred so far
+during the evaluation of the given I<Mail::SPF::Request> object.  If this
+exceeds the configured limit (see the L</new> constructor's C<max_void_dns_lookups>
+option), throws a I<Mail::SPF::EProcessingLimitExceeded> exception.
+
+This method is supposed to be called by any code after any calls to the
+L</dns_lookup> method whenever (i) no answer records were returned, and (ii)
+this fact is a possible indication of a DoS attack against a third-party victim
+domain, and (iii) the number of "void" look-ups is not already constrained
+otherwise (as for example is the case with the C<include> mechanism and the
+C<redirect> modifier).  Specifically, this applies to look-ups performed by the
+C<a>, C<mx>, C<ptr>, and C<exists> mechanisms and the C<p> macro.
+
+=cut
+
+sub count_void_dns_lookup {
+    my ($self, $request) = @_;
+    my $void_dns_lookups_count = ++$request->root_request->state('void_dns_lookups_count');
+    my $max_void_dns_lookups = $self->max_void_dns_lookups;
+    if (
+        defined($max_void_dns_lookups) and
+        $void_dns_lookups_count > $max_void_dns_lookups
+    ) {
+        throw Mail::SPF::EProcessingLimitExceeded(
+            "Maximum void DNS look-ups limit ($max_void_dns_lookups) exceeded");
+    }
+    return;
+}
+
 =item B<default_authority_explanation>: returns I<Mail::SPF::MacroString>
 
 Returns the default authority explanation as a I<MacroString> object.  See the
@@ -513,6 +578,8 @@ __PACKAGE__->make_accessor($_, TRUE)
         max_name_lookups_per_term
         max_name_lookups_per_mx_mech
         max_name_lookups_per_ptr_mech
+        
+        max_void_dns_lookups
     );
 
 =back

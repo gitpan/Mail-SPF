@@ -2,11 +2,11 @@
 # Module::Build build script for Mail::SPF
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
-# $Id: Build.PL 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: Build.PL 44 2007-05-30 23:20:51Z Julian Mehnle $
 #
 ##############################################################################
 
-use Module::Build 0.26;
+use Module::Build 0.2805;
 use version;
 
 my $class = Module::Build->subclass( code => <<'EOF' );
@@ -48,7 +48,7 @@ my $build = $class->new(
     license         => 'bsd',
     requires        => {
         # Core requirements:
-        perl            => '5.006',
+        perl            => 'v5.6',
         version         => 0,
         Error           => 0,
         NetAddr::IP     => '4',
@@ -59,10 +59,10 @@ my $build = $class->new(
     },
     build_requires  => {
         # Build requirements:
-        Module::Build   => '0.26',
+        Module::Build   => '0.2805',
         Test::More      => 0,
         Net::DNS::Resolver::Programmable
-                        => qv('0.002.1')->numify,
+                        => 'v0.002.1',
     },
     script_files    => [
         'bin/spfquery'

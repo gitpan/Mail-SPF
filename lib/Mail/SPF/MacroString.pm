@@ -4,7 +4,7 @@
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: MacroString.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: MacroString.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -249,7 +249,7 @@ sub expand {
                 elsif ($char eq 'p') {  # RFC 4408, 8.1/22
                     try {
                         $value = Mail::SPF::Util->valid_domain_for_ip_address(
-                            $server, $request->ip_address, $request->authority_domain,
+                            $server, $request, $request->ip_address, $request->authority_domain,
                             TRUE, TRUE
                         );
                     }

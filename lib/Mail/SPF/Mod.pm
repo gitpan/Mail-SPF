@@ -4,7 +4,7 @@
 #
 # (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Mod.pm 42 2007-01-20 01:17:05Z Julian Mehnle $
+# $Id: Mod.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -229,6 +229,22 @@ sub new {
 }
 
 =pod
+
+The following additional class method is provided by B<Mail::SPF::GlobalMod>:
+
+=over
+
+=item B<precedence>: returns I<real>
+
+I<Abstract>.  Returns a I<real> number between B<0> and B<1> denoting the
+precedence of the type of the global modifier.  Global modifiers present in an
+SPF record are processed in the order of their precedence values, B<0> meaning
+"first".
+
+This method is abstract and must be implemented by sub-classes of
+Mail::SPF::GlobalMod.
+
+=back
 
 The following specific instance method is provided by B<Mail::SPF::GlobalMod>:
 

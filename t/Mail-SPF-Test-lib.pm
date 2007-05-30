@@ -7,6 +7,8 @@ use Net::DNS::Resolver::Programmable;
 use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;
 
+$Error::Debug = TRUE;
+
 sub run_spf_test_suite_file {
     my ($file_name, $test_case_overrides) = @_;
     $test_case_overrides ||= {};
@@ -71,7 +73,7 @@ sub run_spf_test_suite_file {
                 $result = $server->process($request);
             }
             catch Error with {
-                BAIL_OUT("Uncaught error: ", shift->stacktrace);
+                BAIL_OUT("Uncaught error: " . shift->stacktrace);
             };
             
             my $overall_ok = TRUE;
