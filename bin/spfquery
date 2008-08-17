@@ -3,7 +3,7 @@
 # 
 # spfquery: Command-line tool for performing SPF queries
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
 #     2004      Wayne Schlitt <wayne@schlitt.net>
 # $Id: spfquery 138 2006-01-22 18:00:34Z julian $
 #
@@ -11,8 +11,8 @@
 
 =head1 NAME
 
-spfquery (using Mail::SPF) - Checks if a given set of e-mail parameters matches
-a domain's SPF policy
+spfquery - (Mail::SPF) - Checks if a given set of e-mail parameters matches a
+domain's SPF policy
 
 =head1 VERSION
 

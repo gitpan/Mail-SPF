@@ -29,8 +29,8 @@ sub run_spf_test_suite_file {
     
     foreach my $scenario ($test_suite->scenarios) {
         my $server = Mail::SPF::Server->new(
-            dns_resolver        => Net::DNS::Resolver::Programmable->new(
-                resolver_code       => sub {
+            dns_resolver            => Net::DNS::Resolver::Programmable->new(
+                resolver_code           => sub {
                     my ($domain, $rr_type) = @_;
                     my $rcode = 'NOERROR';
                     my @rrs;
@@ -46,7 +46,9 @@ sub run_spf_test_suite_file {
                     return ($rcode, undef, @rrs);
                 }
             ),
-            default_authority_explanation => 'DEFAULT'
+            default_authority_explanation
+                                    => 'DEFAULT',
+            max_void_dns_lookups    => undef  # Be RFC 4408 compliant during testing!
         );
         
         foreach my $test_case ($scenario->test_cases) { SKIP: {

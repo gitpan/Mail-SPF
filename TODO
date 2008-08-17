@@ -9,18 +9,11 @@
   Mail::SPF:
   + Implement "policy source" concept in mechanisms.  Make the policy source
     accessible from Mail::SPF::Result.
-  + Get "{server,result,more?}_class" constant properties implemented in
-    Mail::SPF::Server and make all classes use them when constructing
-    objects.
-  * Make the "Received-SPF:" header name a constant (overridable) property of
-    Mail::SPF::Result, or a configurable option of Mail::SPF::Server.
-  * Implement DNS cache.  Revert changes to the Mail::SPF::Server's
+  * Implement DNS cache?  If so, revert changes to the Mail::SPF::Server's
     "DESCRIPTION" POD section in r36.
   * Remove or conditionalize debug output generation.  Add more debug code?
   ! Resolve remaining XXXs, FIXMEs, and TODOs:
     grep -rn 'XXX\|TODO\|FIXME' lib | grep -v '\.svn' | less
-  * Increase version number.
-  * Update changelogs.
 
   spfquery:
   + Enable/implement 'sanitize' and 'debug' options.
@@ -31,5 +24,5 @@
 
   Please DO report documentation bugs!
 
-# $Id: TODO 44 2007-05-30 23:20:51Z Julian Mehnle $
+# $Id: TODO 50 2008-08-17 21:28:15Z Julian Mehnle $
 # vim:tw=79 sts=2 sw=2

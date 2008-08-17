@@ -2,9 +2,9 @@
 # Mail::SPF::Mech::Include
 # SPF record "include" mechanism class.
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Include.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: Include.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -20,8 +20,6 @@ use warnings;
 use strict;
 
 use base 'Mail::SPF::Mech';
-
-use Mail::SPF::Result;
 
 use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;
@@ -57,11 +55,11 @@ See L<Mail::SPF::Mech/new>.
 
 =back
 
-=item B<new_from_string($text)>: returns I<Mail::SPF::Mech::Include>;
+=item B<new_from_string($text, %options)>: returns I<Mail::SPF::Mech::Include>;
 throws I<Mail::SPF::ENothingToParse>, I<Mail::SPF::EInvalidMech>
 
-Creates a new SPF record C<include> mechanism object by parsing the given
-string.
+Creates a new SPF record C<include> mechanism object by parsing the string and
+any options given.
 
 =back
 
@@ -155,6 +153,7 @@ sub match {
     # Create sub-request with mutated authority domain:
     my $authority_domain = $self->domain($server, $request);
     my $sub_request = $request->new_sub_request(authority_domain => $authority_domain);
+    
     # Process sub-request:
     my $result = $server->process($sub_request);
     
@@ -168,7 +167,7 @@ sub match {
         or $result->isa('Mail::SPF::Result::SoftFail')
         or $result->isa('Mail::SPF::Result::Neutral');
     
-    throw Mail::SPF::Result::PermError($server, $request,
+    $server->throw_result('permerror', $request,
         "Included domain '$authority_domain' has no applicable sender policy")
         if $result->isa('Mail::SPF::Result::None');
     

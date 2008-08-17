@@ -2,8 +2,8 @@
 # Mail::SPF::Result
 # SPF result class.
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
-# $Id: Result.pm 42 2007-01-20 01:17:05Z Julian Mehnle $
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# $Id: Result.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -31,15 +31,25 @@ use Error ':try';
 use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;
 
-use constant result_classes_by_code => {
+use constant result_classes => {
     pass        => 'Mail::SPF::Result::Pass',
     fail        => 'Mail::SPF::Result::Fail',
     softfail    => 'Mail::SPF::Result::SoftFail',
     neutral     => 'Mail::SPF::Result::Neutral',
+   'neutral-by-default'
+                => 'Mail::SPF::Result::NeutralByDefault',
     none        => 'Mail::SPF::Result::None',
     error       => 'Mail::SPF::Result::Error',
     permerror   => 'Mail::SPF::Result::PermError',
     temperror   => 'Mail::SPF::Result::TempError'
+};
+
+use constant received_spf_header_name => 'Received-SPF';
+
+use constant received_spf_header_scope_names_by_scope => {
+    helo        => 'helo',
+    mfrom       => 'mailfrom',
+    pra         => 'pra'
 };
 
 use constant received_spf_header_identity_key_names_by_scope => {
@@ -71,10 +81,10 @@ and its derivatives, see below.
     
     sub foo {
         if (...) {
-            throw Mail::SPF::Result::Pass($server, $request);
+            $server->throw_result('pass', $request)
         }
         else {
-            throw Mail::SPF::Result::PermError($server, $request, 'Invalid foo');
+            $server->throw_result('permerror', $request, 'Invalid foo');
         }
     }
 
@@ -94,6 +104,7 @@ and its derivatives, see below.
 
 =head2 Using results
 
+    my $result_name     = $result->name;
     my $result_code     = $result->code;
     my $request         = $result->request;
     my $local_exp       = $result->local_explanation;
@@ -171,6 +182,11 @@ Throws a new SPF result object, associating the given I<Mail::SPF::Server> and
 I<Mail::SPF::Request> objects with it.  An optional result text may be
 specified.
 
+I<Note>:  Do not write code invoking C<throw> on I<literal> result class names
+as this would ignore any derivative result classes provided by B<Mail::SPF>
+extension modules.  Invoke the L<C<throw_result>|Mail::SPF::Server/throw_result>
+method on a I<Mail::SPF::Server> object instead.
+
 =cut
 
 sub throw {
@@ -183,54 +199,92 @@ sub throw {
 
 =item B<name>: returns I<string>
 
-Returns the trailing part of the name of the I<Mail::SPF::Result::*> class on
-which it is invoked.  For example, returns C<NeutralByDefault> if invoked on
-I<Mail::SPF::Result::NeutralByDefault>.  This method may also be used as an
-instance method.
+I<Abstract>.  Returns the result name of the result class (or object).  For
+classes of the I<Mail::SPF::Result::*> hierarchy, this roughly corresponds to
+the trailing part of the class name.  For example, returns C<neutral-by-default>
+if invoked on I<Mail::SPF::Result::NeutralByDefault>.  Also see the L</code>
+method.  This method may also be used as an instance method.
+
+This method must be implemented by sub-classes of Mail::SPF::Result for which
+the result I<name> differs from the result I<code>.
 
 =cut
 
+# This method being implemented here does not make it any less abstract,
+# because the code() method it uses is still abstract.
 sub name {
     my ($self) = @_;
-    my $class = ref($self) || $self;
-    return $class =~ /^Mail::SPF::Result::(\w+)$/ ? $1 : $class;
+    return $self->code;
+}
+
+=item B<class>: returns I<class>
+
+=item B<class($name)>: returns I<class>
+
+Maps the given result name to the corresponding I<Mail::SPF::Result::*> class,
+or returns the result base class (the class on which it is invoked) if no
+result name is given.  If an unknown result name is specified, returns
+B<undef>.
+
+=cut
+
+sub class {
+    my ($self, $name) = @_;
+    return defined($name) ? $self->result_classes->{lc($name)} : (ref($self) || $self);
+}
+
+=item B<isa_by_name($name)>: returns I<boolean>
+
+If the class (or object) on which this method is invoked represents the given
+result name (or a derivative name), returns B<true>.  Returns B<false>
+otherwise.  This method may also be used as an instance method.
+
+For example, C<< Mail::SPF::Result::NeutralByDefault->isa_by_name('neutral') >>
+returns B<true>.
+
+=cut
+
+sub isa_by_name {
+    my ($self, $name) = @_;
+    my $suspect_class = $self->class($name);
+    return FALSE if not defined($suspect_class);
+    return $self->isa($suspect_class);
 }
 
 =item B<code>: returns I<string>
 
-Returns the result code (C<"pass">, C<"fail">, C<"softfail">, C<"neutral">,
-C<"none">, C<"error">, C<"permerror">, C<"permerror">) of the
-I<Mail::SPF::Result::*> class on which it is invoked.  This method may also be
-used as an instance method.
+I<Abstract>.  Returns the basic SPF result code (C<"pass">, C<"fail">,
+C<"softfail">, C<"neutral">, C<"none">, C<"error">, C<"permerror">,
+C<"permerror">) of the result class on which it is invoked.  All valid result
+codes are valid result names as well, the reverse however does not apply.  This
+method may also be used as an instance method.
 
-=item B<class_by_code($code)>: returns I<class>
-
-Maps the given result code to the corresponding I<Mail::SPF::Result::*> class.
-If an unknown result code was specified, returns B<undef>.
-
-=cut
-
-sub class_by_code {
-    my ($self, $code) = @_;
-    return $self->result_classes_by_code->{lc($code)};
-}
+This method is abstract and must be implemented by sub-classes of
+Mail::SPF::Result.
 
 =item B<is_code($code)>: returns I<boolean>
 
 If the class (or object) on which this method is invoked represents the given
-result code (or a derivative code), returns B<true>.  Returns B<false>
-otherwise.  This method may also be used as an instance method.
+result code, returns B<true>.  Returns B<false> otherwise.  This method may
+also be used as an instance method.
 
-For example, C<< Mail::SPF::Result::Pass->is_code('pass') >> returns B<true>.
+I<Note>:  The L</isa_by_name> method provides a superset of this method's
+functionality.
 
 =cut
 
 sub is_code {
     my ($self, $code) = @_;
-    my $suspect_class = $self->class_by_code($code);
-    return FALSE if not defined($suspect_class);
-    return $self->isa($suspect_class);
+    return $self->isa_by_name($code);
 }
+
+=item B<received_spf_header_name>: returns I<string>
+
+Returns B<'Received-SPF'> as the field name for C<Received-SPF> header fields.
+This method should be overridden by B<Mail::SPF> extension modules that provide
+non-standard features (such as local policy) with the capacity to dilute the
+purity of SPF results, in order not to deceive users of the header field into
+mistaking it as an indication of a natural SPF result.
 
 =back
 
@@ -250,10 +304,6 @@ Re-throws an existing SPF result object.  If I<Mail::SPF::Server> and
 I<Mail::SPF::Request> objects are specified, associates them with the result
 object, replacing the prior server and request objects.  If a result text is
 specified as well, overrides the prior result text.
-
-=item B<code>: returns I<string>
-
-Returns the result code of the result object.
 
 =item B<server>: returns I<Mail::SPF::Server>
 
@@ -349,11 +399,13 @@ sub received_spf_header {
     my ($self) = @_;
     return $self->{received_spf_header}
         if defined($self->{received_spf_header});
+    my $scope_name =
+        $self->received_spf_header_scope_names_by_scope->{$self->{request}->scope};
     my $identity_key_name =
         $self->received_spf_header_identity_key_names_by_scope->{$self->{request}->scope};
     my @info_pairs = (
         receiver            => $self->{server}->hostname || 'unknown',
-        identity            => $self->{request}->scope,
+        identity            => $scope_name,
         $identity_key_name  => $self->{request}->identity,
         (
             ($self->{request}->scope ne 'helo' and defined($self->{request}->helo_identity)) ?
@@ -374,7 +426,8 @@ sub received_spf_header {
         $info_string .= "$key=$value";
     }
     return $self->{received_spf_header} = sprintf(
-        "Received-SPF: %s (%s) %s",
+        "%s: %s (%s) %s",
+        $self->received_spf_header_name,
         $self->code,
         $self->local_explanation,
         $info_string
@@ -394,7 +447,59 @@ The following result classes are provided:
 
 =over
 
-=item I<Mail::SPF::Result::Pass>
+=item *
+
+I<Mail::SPF::Result::Pass>
+
+=item *
+
+I<Mail::SPF::Result::Fail>
+
+=item *
+
+I<Mail::SPF::Result::SoftFail>
+
+=item *
+
+I<Mail::SPF::Result::Neutral>
+
+=over
+
+=item *
+
+I<Mail::SPF::Result::NeutralByDefault>
+
+This is a special case of the C<neutral> result that is thrown as a default
+when "falling off" the end of the record during evaluation.  See RFC 4408,
+4.7.
+
+=back
+
+=item *
+
+I<Mail::SPF::Result::None>
+
+=item *
+
+I<Mail::SPF::Result::Error>
+
+=over
+
+=item *
+
+I<Mail::SPF::Result::PermError>
+
+=item *
+
+I<Mail::SPF::Result::TempError>
+
+=back
+
+=back
+
+The following result classes have additional functionality:
+
+=over
 
 =item I<Mail::SPF::Result::Fail>
 
@@ -411,28 +516,6 @@ should not be trusted blindly.  See RFC 4408, 10.5, for a detailed discussion
 of this issue.
 
 =back
-
-=item I<Mail::SPF::Result::SoftFail>
-
-=item I<Mail::SPF::Result::Neutral>
-
-=item I<Mail::SPF::Result::NeutralByDefault>
-
-This is a special-case of the C<neutral> result that is thrown as a default
-when "falling off" the end of the record during evaluation.  See RFC 4408,
-4.7.
-
-=item I<Mail::SPF::Result::None>
-
-=item I<Mail::SPF::Result::Error>
-
-The following sub-classes of I<Mail::SPF::Result::Error> are provided:
-
-=over
-
-=item I<Mail::SPF::Result::PermError>
-
-=item I<Mail::SPF::Result::TempError>
 
 =back
 
@@ -490,6 +573,7 @@ use constant code => 'neutral';
 
 package Mail::SPF::Result::NeutralByDefault;
 our @ISA = 'Mail::SPF::Result::Neutral';
+use constant name => 'neutral-by-default';
     # This is a special-case of the Neutral result that is thrown as a default
     # when "falling off" the end of the record.  See Mail::SPF::Record::eval().
 
@@ -508,8 +592,6 @@ use constant code => 'permerror';
 package Mail::SPF::Result::TempError;
 our @ISA = 'Mail::SPF::Result::Error';
 use constant code => 'temperror';
-
-=back
 
 =head1 SEE ALSO
 

@@ -2,9 +2,9 @@
 # Mail::SPF::Server
 # Server class for processing SPF requests.
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Server.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
+# $Id: Server.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -36,15 +36,23 @@ use constant record_classes_by_version => {
     2   => 'Mail::SPF::v2::Record'
 };
 
+use constant result_base_class => 'Mail::SPF::Result';
+
+use constant query_rr_type_all                      => 0;
+use constant query_rr_type_spf                      => 1;
+use constant query_rr_type_txt                      => 2;
+
 use constant default_default_authority_explanation  =>
-    'Please see http://www.openspf.org/Why?s=%{_scope}&id=%{S}&ip=%{C}&r=%{R}';
+    'Please see http://www.openspf.org/Why?s=%{_scope};id=%{S};ip=%{C};r=%{R}';
+
+sub default_query_rr_types { shift->query_rr_type_all };
 
 use constant default_max_dns_interactive_terms      => 10;  # RFC 4408, 10.1/6
 use constant default_max_name_lookups_per_term      => 10;  # RFC 4408, 10.1/7
 sub default_max_name_lookups_per_mx_mech  { shift->max_name_lookups_per_term };
 sub default_max_name_lookups_per_ptr_mech { shift->max_name_lookups_per_term };
 
-use constant default_max_void_dns_lookups           => undef;
+use constant default_max_void_dns_lookups           => 2;
 
 # Interface:
 ##############################################################################
@@ -94,7 +102,7 @@ A I<string> denoting the default (not macro-expanded) authority explanation
 string to use if the authority domain does not specify an explanation string of
 its own.  Defaults to:
 
-    'Please see http://www.openspf.org/Why?s=%{_scope}&id=%{S}&ip=%{C}&r=%{R}'
+    'Please see http://www.openspf.org/Why?s=%{_scope};id=%{S};ip=%{C};r=%{R}'
 
 As can be seen from the default, a non-standard C<_scope> pseudo macro is
 supported that expands to the name of the identity's scope.  (Note: Do I<not>
@@ -114,6 +122,37 @@ provide an interface similar to I<Net::DNS::Resolver> -- at least the C<send>
 and C<errorstring> methods must be supported, and the C<send> method must
 return either an object of class I<Net::DNS::Packet>, or, in the case of an
 error, B<undef>.
+
+=item B<query_rr_types>
+
+For which RR types to query when looking up and selecting SPF records.  The
+following values are supported:
+
+=over
+
+=item B<< Mail::SPF::Server->query_rr_type_all >> (default)
+
+Both C<SPF> and C<TXT> type RRs.
+
+=item B<< Mail::SPF::Server->query_rr_type_spf >>
+
+C<SPF> type RRs only.
+
+=item B<< Mail::SPF::Server->query_rr_type_txt >>
+
+C<TXT> type RRs only.
+
+=back
+
+Some (few) name servers suffer from serious brain damage with regard to the
+handling of queries for RR types that are unknown to them, such as the C<SPF>
+RR type, so some (few) B<Mail::SPF> users have expressed the desire for a way
+to disable the retrieval of C<SPF> type RRs.  It is, however, a better idea to
+pressure the manufacturers of such broken name servers into fixing their
+products.
+
+See RFC 4408, 3.1.1, for a discussion of the topic, as well as the description
+of the L</select_record> method.
 
 =item B<max_dns_interactive_terms>
 
@@ -152,7 +191,8 @@ i.e. the number of DNS look-ups that were caused by DNS-interactive terms and
 macros (as defined in RFC 4408, 10.1, paragraphs 6 and 7) and that are allowed
 to return an empty answer with RCODE 0 or RCODE 3 (C<NXDOMAIN>) before
 processing is aborted with a C<permerror> result.  If B<undef> is specified,
-there is no limit on the number of void DNS look-ups.  Defaults to B<undef>.
+there is no stricter limit on the number of void DNS look-ups beyond the usual
+processing limits.  Defaults to B<2>.
 
 Specifically, the DNS look-ups that are subject to this limit are those caused
 by the C<a>, C<mx>, C<ptr>, and C<exists> mechanisms and the C<p> macro.
@@ -183,6 +223,9 @@ sub new {
     
     $self->{dns_resolver} ||= Net::DNS::Resolver->new();
     
+    $self->{query_rr_types} = $self->default_query_rr_types
+        if not defined($self->{query_rr_types});
+    
     $self->{max_dns_interactive_terms}      = $self->default_max_dns_interactive_terms
                                        if not exists($self->{max_dns_interactive_terms});
     $self->{max_name_lookups_per_term}      = $self->default_max_name_lookups_per_term
@@ -196,6 +239,57 @@ sub new {
                                        if not exists($self->{max_void_dns_lookups});
     
     return $self;
+}
+
+=back
+
+=head2 Class methods
+
+The following class methods are provided:
+
+=over
+
+=item B<result_class>: returns I<class>
+
+=item B<result_class($name)>: returns I<class>
+
+Returns a I<Mail::SPF::Result> descendent class determined from the given
+result name via the server's inherent result base class, or returns the
+server's inherent result base class if no result name is given.  This method
+may also be used as an instance method.
+
+I<Note>:  Do not write code invoking class methods on I<literal> result class
+names as this would ignore any derivative result classes provided by
+B<Mail::SPF> extension modules.
+
+=cut
+
+sub result_class {
+    my ($self, $name) = @_;
+    return
+        defined($name) ?
+            $self->result_base_class->result_classes->{$name}
+        :   $self->result_base_class;
+}
+
+=item B<throw_result($name, $request)>: throws I<Mail::SPF::Result>
+
+=item B<throw_result($name, $request, $text)>: throws I<Mail::SPF::Result>
+
+Throws a I<Mail::SPF::Result> descendant determined from the given result name
+via the server's inherent result base class, passing an optional result text
+and associating the given I<Mail::SPF::Request> object with the result object.
+This method may also be used as an instance method.
+
+I<Note>:  Do not write code invoking C<throw> on I<literal> result class names
+as this would ignore any derivative result classes provided by B<Mail::SPF>
+extension modules.
+
+=cut
+
+sub throw_result {
+    my ($self, $name, $request, @text) = @_;
+    $self->result_class($name)->throw($self, $request, @text);
 }
 
 =back
@@ -234,19 +328,19 @@ sub process {
         $result = shift;
     }
     catch Mail::SPF::EDNSError with {
-        $result = Mail::SPF::Result::TempError->new($self, $request, shift->text);
+        $result = $self->result_class('temperror')->new($self, $request, shift->text);
     }
     catch Mail::SPF::ENoAcceptableRecord with {
-        $result = Mail::SPF::Result::None->new($self, $request, shift->text);
+        $result = $self->result_class('none'     )->new($self, $request, shift->text);
     }
     catch Mail::SPF::ERedundantAcceptableRecords with {
-        $result = Mail::SPF::Result::PermError->new($self, $request, shift->text);
+        $result = $self->result_class('permerror')->new($self, $request, shift->text);
     }
     catch Mail::SPF::ESyntaxError with {
-        $result = Mail::SPF::Result::PermError->new($self, $request, shift->text);
+        $result = $self->result_class('permerror')->new($self, $request, shift->text);
     }
     catch Mail::SPF::EProcessingLimitExceeded with {
-        $result = Mail::SPF::Result::PermError->new($self, $request, shift->text);
+        $result = $self->result_class('permerror')->new($self, $request, shift->text);
     };
     # Propagate other, unknown errors.
     # This should not happen, but if it does, it helps exposing the bug!
@@ -295,6 +389,10 @@ I<Mail::SPF::ERedundantAcceptableRecords> exception.
 
 =back
 
+If the querying of either RR type has been disabled via the L</new>
+constructor's C<query_rr_types> option, the respective part in step 2 will
+be skipped.
+
 I<Mail::SPF::EDNSError> exceptions due to DNS look-ups and
 I<Mail::SPF::ESyntaxError> exceptions due to invalid acceptable records may
 also be thrown.
@@ -314,28 +412,40 @@ sub select_record {
     # Query for SPF type records first, then fall back to TXT type records.
     
     my @records;
+    my $query_count = 0;
     my @dns_errors;
     
-    # Query for SPF type RRs first:
-    try {
-        my $packet = $self->dns_lookup($domain, 'SPF');
-        push(
-            @records,
-            $self->get_acceptable_records_from_packet(
-                $packet, 'SPF', \@versions, $scope, $domain)
-        );
+    # Query for SPF-type RRs first:
+    if (
+        $self->query_rr_types == $self->query_rr_type_all or
+        $self->query_rr_types &  $self->query_rr_type_spf
+    ) {
+        try {
+            $query_count++;
+            my $packet = $self->dns_lookup($domain, 'SPF');
+            push(
+                @records,
+                $self->get_acceptable_records_from_packet(
+                    $packet, 'SPF', \@versions, $scope, $domain)
+            );
+        }
+        catch Mail::SPF::EDNSError with {
+            push(@dns_errors, shift);
+        };
+        #catch Mail::SPF::EDNSTimeout with {
+        #    # FIXME Ignore DNS time-outs on SPF type lookups?
+        #    # Apparrently some brain-dead DNS servers time out on SPF-type queries.
+        #};
     }
-    catch Mail::SPF::EDNSError with {
-        push(@dns_errors, shift);
-    };
-    #catch Mail::SPF::EDNSTimeout with {
-    #    # FIXME Ignore DNS time-outs on SPF type lookups?
-    #    # Apparrently some brain-dead DNS servers time out on SPF-type queries.
-    #};
     
-    if (not @records) {
-        # No usable SPF-type RRs, try TXT-type RRs.
-        
+    # If no usable SPF-type RRs, try TXT-type RRs:
+    if (
+        not @records and
+        (
+            $self->query_rr_types == $self->query_rr_type_all or
+            $self->query_rr_types &  $self->query_rr_type_txt
+        )
+    ) {
         # NOTE:
         #   This deliberately violates RFC 4406 (Sender ID), 4.4/3 (4.4.1):
         #   TXT-type RRs are still tried if there _are_ SPF-type RRs but all of
@@ -347,6 +457,7 @@ sub select_record {
         #   under a strict interpretation of RFC 4406.
         
         try {
+            $query_count++;
             my $packet = $self->dns_lookup($domain, 'TXT');
             push(
                 @records,
@@ -359,7 +470,7 @@ sub select_record {
         };
     }
     
-    @dns_errors < 2
+    @dns_errors < $query_count
         or $dns_errors[0]->throw;
         # Unless at least one query succeeded, re-throw the first DNS error that occurred.
     
@@ -367,20 +478,9 @@ sub select_record {
         or throw Mail::SPF::ENoAcceptableRecord(
             "No applicable sender policy available");  # RFC 4408, 4.5/7
     
-    #STDERR->print("DEBUG: Acceptable records:\n");
-    #foreach my $record (@records) {
-    #    STDERR->print("  $record\n");
-    #}
-    
     # Discard all records but the highest acceptable version:
     my $preferred_record_class = $records[0]->class;
-    #STDERR->print("DEBUG: Discarding all non-'$preferred_record_class' records.\n");
     @records = grep($_->isa($preferred_record_class), @records);
-    
-    #STDERR->print("DEBUG: Acceptable records after discarding:\n");
-    #foreach my $record (@records) {
-    #    STDERR->print("  $record\n");
-    #}
     
     @records == 1
         or throw Mail::SPF::ERedundantAcceptableRecords(
@@ -553,6 +653,12 @@ constructor's C<hostname> option.
 Returns the DNS resolver object of the server object.  See the description of
 the L</new> constructor's C<dns_resolver> option.
 
+=item B<query_rr_types>: returns I<integer>
+
+Returns a value denoting the RR types for which to query when looking up and
+selecting SPF records.  See the description of the L</new> constructor's
+C<query_rr_types> option.
+
 =item B<max_dns_interactive_terms>: returns I<integer>
 
 =item B<max_name_lookups_per_term>: returns I<integer>
@@ -560,6 +666,8 @@ the L</new> constructor's C<dns_resolver> option.
 =item B<max_name_lookups_per_mx_mech>: returns I<integer>
 
 =item B<max_name_lookups_per_ptr_mech>: returns I<integer>
+
+=item B<max_void_dns_lookups>: returns I<integer>
 
 Return the limit values of the server object.  See the description of the
 L</new> constructor's corresponding options.
@@ -573,6 +681,7 @@ __PACKAGE__->make_accessor($_, TRUE)
         hostname
         
         dns_resolver
+        query_rr_types
         
         max_dns_interactive_terms
         max_name_lookups_per_term

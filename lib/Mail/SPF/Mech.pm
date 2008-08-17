@@ -2,9 +2,9 @@
 # Mail::SPF::Mech
 # SPF record mechanism class.
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Mech.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
+# $Id: Mech.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -28,7 +28,6 @@ use NetAddr::IP;
 
 use Mail::SPF::Record;
 use Mail::SPF::MacroString;
-use Mail::SPF::Result;
 use Mail::SPF::Util;
 
 use constant TRUE   => (0 == 0);
@@ -125,11 +124,11 @@ sub new {
     return $self;
 }
 
-=item B<new_from_string($text)>: returns I<Mail::SPF::Mech>; throws
-I<Mail::SPF::ENothingToParse>, I<Mail::SPF::EInvalidMech>
+=item B<new_from_string($text, %options)>: returns I<Mail::SPF::Mech>;
+throws I<Mail::SPF::ENothingToParse>, I<Mail::SPF::EInvalidMech>
 
-I<Abstract>.  Creates a new SPF record mechanism object by parsing the given
-string.
+I<Abstract>.  Creates a new SPF record mechanism object by parsing the string and
+any options given.
 
 =back
 
@@ -155,6 +154,13 @@ Returns the default IPv6 network prefix length, i.e. B<128>.
 
 Returns a regular expression that matches any legal mechanism qualifier, i.e. B<'+'>,
 B<'-'>, B<'~'>, or B<'?'>.
+
+=item B<name>: returns I<string>
+
+I<Abstract>.  Returns the name of the mechanism.
+
+This method is abstract and must be implemented by sub-classes of
+Mail::SPF::Mech.
 
 =item B<name_pattern>: returns I<Regexp>
 
@@ -240,15 +246,6 @@ sub qualifier {
     # Read-only!
     return $self->{qualifier} || $self->default_qualifier;
 }
-
-=item B<name>: returns I<string>
-
-Returns the name of the mechanism.
-
-=cut
-
-# Make read-only accessor:
-__PACKAGE__->make_accessor('name', TRUE);
 
 =item B<params>: returns I<string>
 
@@ -396,7 +393,7 @@ sub explain {
 =item B<explanation_template($server, $request, $result)>: returns I<string>
 
 Returns a macro string template for a locally generated explanation for why the
-mechanism caused the given result.
+mechanism caused the given result object.
 
 Sub-classes should either define an C<explanation_templates_by_result_code>
 hash constant with their own templates, or override this method.

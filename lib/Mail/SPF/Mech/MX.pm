@@ -2,9 +2,9 @@
 # Mail::SPF::Mech::MX
 # SPF record "mx" mechanism class.
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: MX.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
+# $Id: MX.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -59,10 +59,11 @@ See L<Mail::SPF::Mech/new>.
 
 =back
 
-=item B<new_from_string($text)>: returns I<Mail::SPF::Mech::MX>;
+=item B<new_from_string($text, %options)>: returns I<Mail::SPF::Mech::MX>;
 throws I<Mail::SPF::ENothingToParse>, I<Mail::SPF::EInvalidMech>
 
-Creates a new SPF record C<mx> mechanism object by parsing the given string.
+Creates a new SPF record C<mx> mechanism object by parsing the string and
+any options given.
 
 =back
 

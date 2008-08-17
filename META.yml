@@ -1,13 +1,13 @@
 ---
 name: Mail-SPF
-version: v2.005
+version: v2.006
 author:
   - 'Julian Mehnle <julian@mehnle.net>'
   - 'Shevek <cpan@anarres.org>'
 abstract: An object-oriented implementation of Sender Policy Framework
 license: bsd
 resources:
-  license: http://www.opensource.org/licenses/bsd-license.php
+  license: http://opensource.org/licenses/bsd-license.php
 requires:
   Error: 0
   Net::DNS: 0.58
@@ -19,10 +19,12 @@ build_requires:
   Module::Build: 0.2805
   Net::DNS::Resolver::Programmable: v0.002.1
   Test::More: 0
+recommends:
+  NetAddr::IP: 4.007
 provides:
   Mail::SPF:
     file: lib/Mail/SPF.pm
-    version: v2.005
+    version: v2.006
   Mail::SPF::Base:
     file: lib/Mail/SPF/Base.pm
   Mail::SPF::EAbstractClass:
@@ -161,7 +163,7 @@ provides:
     file: lib/Mail/SPF/v1/Record.pm
   Mail::SPF::v2::Record:
     file: lib/Mail/SPF/v2/Record.pm
-generated_by: Module::Build version 0.2808
+generated_by: Module::Build version 0.280801
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
   version: 1.2

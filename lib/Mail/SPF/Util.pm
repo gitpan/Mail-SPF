@@ -2,9 +2,9 @@
 # Mail::SPF::Util
 # Mail::SPF utility class.
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Util.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
+# $Id: Util.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
 #
 ##############################################################################
 

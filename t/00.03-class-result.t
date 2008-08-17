@@ -4,7 +4,7 @@ use blib;
 
 use Error ':try';
 
-use Test::More tests => 16;
+use Test::More tests => 20;
 
 use Mail::SPF::Request;
 
@@ -44,33 +44,39 @@ BEGIN { use_ok('Mail::SPF::Result') }
 }
 
 
-#### class_by_code() ####
+#### class() ####
 
 {
     my $class;
 
-    $class = Mail::SPF::Result->class_by_code('PaSs');
-    is($class,               'Mail::SPF::Result::Pass', 'Result class_by_code($valid_code)');
+    $class = Mail::SPF::Result->class;
+    is($class,                     'Mail::SPF::Result', 'Result class()');
 
-    $class = Mail::SPF::Result->class_by_code('foo');
-    is($class,                      undef,              'Result class_by_code($invalid_code)');
+    $class = Mail::SPF::Result->class('PaSs');
+    is($class,               'Mail::SPF::Result::Pass', 'Result class($valid_name)');
+
+    $class = Mail::SPF::Result->class('foo');
+    is($class,                      undef,              'Result class($invalid_name)');
 }
 
 
-#### is_code() ####
+#### isa_by_name(), is_code() ####
 
 {
     my $result = Mail::SPF::Result::Pass->new('dummy server', 'dummy request');
+    ok($result->isa_by_name('PaSs'),                    'Result isa_by_name($valid_name)');
+    ok((not $result->isa_by_name('foo')),               'Result isa_by_name($invalid_name)');
     ok($result->is_code('PaSs'),                        'Result is_code($valid_code)');
     ok((not $result->is_code('foo')),                   'Result is_code($invalid_code)');
 }
 
 
-#### NeutralByDefault, code() ####
+#### NeutralByDefault, code(), isa_by_name() ####
 
 {
     my $result = Mail::SPF::Result::NeutralByDefault->new('dummy server', 'dummy request');
     isa_ok($result,       'Mail::SPF::Result::Neutral', 'NeutralByDefault result object');
     is($result->code,               'neutral',          'NeutralByDefault result code()');
-    ok($result->is_code('neutral'),                     'NeutralByDefault is_code("neutral")');
+    ok($result->isa_by_name('neutral-by-default'),      'NeutralByDefault isa_by_name("neutral-by-default")');
+    ok($result->isa_by_name('neutral'),                 'NeutralByDefault isa_by_name("neutral")');
 }

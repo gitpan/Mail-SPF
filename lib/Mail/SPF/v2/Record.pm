@@ -2,9 +2,9 @@
 # Mail::SPF::v2::Record
 # Sender ID ("spf2.0") record class.
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Record.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: Record.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -110,12 +110,12 @@ sub new {
     return $self;
 }
 
-=item B<new_from_string($text)>: returns I<Mail::SPF::v2::Record>;
+=item B<new_from_string($text, %options)>: returns I<Mail::SPF::v2::Record>;
 throws I<Mail::SPF::ENothingToParse>, I<Mail::SPF::EInvalidRecordVersion>,
 I<Mail::SPF::ESyntaxError>
 
-Creates a new Sender ID ("spf2.0") record object by parsing the specified
-string.
+Creates a new Sender ID ("spf2.0") record object by parsing the string and
+any options given.
 
 =back
 

@@ -1,12 +1,12 @@
 #
 # Module::Build build script for Mail::SPF
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
-# $Id: Build.PL 44 2007-05-30 23:20:51Z Julian Mehnle $
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# $Id: Build.PL 50 2008-08-17 21:28:15Z Julian Mehnle $
 #
 ##############################################################################
 
-use Module::Build 0.2805;
+use Module::Build 0.26;
 use version;
 
 my $class = Module::Build->subclass( code => <<'EOF' );
@@ -56,6 +56,7 @@ my $build = $class->new(
         URI             => '1.13'
     },
     recommends      => {
+        NetAddr::IP     => '4.007'  # has all $& and $` removed for better performance
     },
     build_requires  => {
         # Build requirements:

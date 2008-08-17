@@ -2,9 +2,9 @@
 # Mail::SPF::Mod::Exp
 # SPF record "exp" modifier class.
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Exp.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
+# $Id: Exp.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -24,7 +24,6 @@ use base 'Mail::SPF::GlobalMod';
 
 use Error ':try';
 
-use Mail::SPF::Result;
 use Mail::SPF::MacroString;
 
 use constant TRUE   => (0 == 0);
@@ -61,10 +60,11 @@ See L<Mail::SPF::Mod/new>.
 
 =back
 
-=item B<new_from_string($text)>: returns I<Mail::SPF::Mod::Exp>; throws
-I<Mail::SPF::ENothingToParse>, I<Mail::SPF::EInvalidMod>
+=item B<new_from_string($text, %options)>: returns I<Mail::SPF::Mod::Exp>;
+throws I<Mail::SPF::ENothingToParse>, I<Mail::SPF::EInvalidMod>
 
-Creates a new SPF record C<exp> modifier object by parsing the given string.
+Creates a new SPF record C<exp> modifier object by parsing the string and
+any options given.
 
 =back
 
@@ -140,10 +140,10 @@ sub process {
         my $txt_packet = $server->dns_lookup($exp_domain, 'TXT');
         my @txt_rrs = grep($_->type eq 'TXT', $txt_packet->answer);
         @txt_rrs > 0
-            or throw Mail::SPF::Result::PermError($server, $request,
+            or $server->throw_result('permerror', $request,
                 "No authority explanation string available at domain '$exp_domain'");  # RFC 4408, 6.2/4
         @txt_rrs == 1
-            or throw Mail::SPF::Result::PermError($server, $request,
+            or $server->throw_result('permerror', $request,
                 "Redundant authority explanation strings found at domain '$exp_domain'");  # RFC 4408, 6.2/4
         my $explanation = Mail::SPF::MacroString->new(
             text            => join('', $txt_rrs[0]->char_str_list),

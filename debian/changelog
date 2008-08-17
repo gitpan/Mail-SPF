@@ -1,3 +1,60 @@
+mail-spf-perl (2.006) unstable; urgency=low
+
+  Debian:
+  * Recommends: libnetaddr-ip-perl (>= 4.007) (in addition to the Depends on
+    >= 4), as it has all $& and $` removed for better performance;
+    see <http://issues.apache.org/SpamAssassin/show_bug.cgi?id=5312>.
+  * Homepage: http://search.cpan.org/dist/Mail-SPF/
+  * Standards-Version: 3.8.0 (was: 3.7.2)
+  * Added watch file.
+  * Other minor improvements.
+
+  Mail::SPF:
+  + Added result object factory facility to Mail::SPF::Server in order to
+    support the sub-classing of Mail::SPF::Server and Mail::SPF::Result.
+    See README for details.
+    Any code throwing Mail::SPF::Result(::*) objects directly should stop doing
+    so and use Mail::SPF::Server::throw_result() instead.
+  + Added a "query_rr_types" option to Mail::SPF::Server's constructor as a
+    way to disable the retrieval of either "SPF" or "TXT" type RRs.
+    I wouldn't make use of it if I was you!
+  ! Changed the "max_void_dns_lookups" option's default value from undef (i.e.,
+    no limit) to a limit of 2.  This should not cause any problems in practice,
+    however see the "max_void_dns_lookups" option's description for specifics
+    on what this entails.
+  * Match <toplabel> patterns greedily by reversing the order of the <toplabel>
+    regexp alternatives from RFC 4408.  Thus TLDs with dashes (e.g.,
+    ".xn--wgv71a") are now correctly matched.
+  * In macro strings, expand '%-' to '%20' rather than '-'.
+    Thanks to Frank Ellermann for providing a test case for the RFC 4408 test
+    suite that inadvertently exposed this bug.
+  > Mail::SPF::Result:
+    + Added new received_spf_header_name() constant specifying the "Received-
+      SPF" header field name, which may (and usually should) be overridden by
+      custom result sub-classes; see the documentation.
+    * Generate "identity=mailfrom" rather than "identity=mfrom" in
+      "Received-SPF" header field.
+    * name() now returns a symbolic result name instead of the trailing part of
+      the result class name.  This should not have no impact on 3rd-party code.
+    * Added new isa_by_name() method as an equivalent to the built-in isa(),
+      taking a result name instead of a class name.  Provides a superset of the
+      is_code() method's functionality.
+  * Substituted ";"s for "&" parameter separators in the openspf.org "Why?"
+    page URL in the default authority explanation string.  This change is
+    purely cosmetic.
+  * Minor documentation fixes and improvements.
+
+  Miscellaneous:
+  * We ship and pass the 2008.08 release of the official RFC 4408 test suite.
+  * While officially declaring a build-requirement of Module::Build >= 0.2805
+    (which, if not satisfied, Module::Build itself will warn about, but not
+    abort), do not strictly require it.  If the META.yml file generated during
+    package building is irrelevant, e.g., if we are being built by a package
+    management/build system such as Debian's, then 0.26 is sufficient.
+  * Recommend NetAddr::IP >= 4.007; see above.
+
+ -- Julian Mehnle <julian@mehnle.net>  Sun, 17 Aug 2008 21:18:33 +0000
+
 mail-spf-perl (2.005) unstable; urgency=low
 
   Debian:

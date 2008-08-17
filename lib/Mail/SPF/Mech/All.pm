@@ -2,9 +2,9 @@
 # Mail::SPF::Mech::All
 # SPF record "all" mechanism class.
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: All.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: All.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -59,10 +59,11 @@ See L<Mail::SPF::Mech/new>.
 
 =back
 
-=item B<new_from_string($text)>: returns I<Mail::SPF::Mech::All>;
+=item B<new_from_string($text, %options)>: returns I<Mail::SPF::Mech::All>;
 throws I<Mail::SPF::ENothingToParse>, I<Mail::SPF::EInvalidMech>
 
-Creates a new SPF record C<all> mechanism object by parsing the given string.
+Creates a new SPF record C<all> mechanism object by parsing the string and
+any options given.
 
 =back
 

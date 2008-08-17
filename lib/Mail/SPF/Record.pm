@@ -2,9 +2,9 @@
 # Mail::SPF::Record
 # Abstract base class for SPF records.
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Record.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
+# $Id: Record.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -28,8 +28,6 @@ use overload
     fallback    => 1;
 
 use Error ':try';
-
-use Mail::SPF::Result;
 
 use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;
@@ -133,11 +131,11 @@ sub new {
     return $self;
 }
 
-=item B<new_from_string($text)>: returns I<Mail::SPF::Record>;
+=item B<new_from_string($text, %options)>: returns I<Mail::SPF::Record>;
 throws I<Mail::SPF::ENothingToParse>, I<Mail::SPF::EInvalidRecordVersion>,
 I<Mail::SPF::ESyntaxError>
 
-Creates a new SPF record object by parsing the given string.
+Creates a new SPF record object by parsing the string and any options given.
 
 =cut
 
@@ -387,8 +385,8 @@ sub eval {
                 # Term is a mechanism.
                 my $mech = $term;
                 if ($mech->match($server, $request)) {
-                    my $result_code  = $self->results_by_qualifier->{$mech->qualifier};
-                    my $result_class = Mail::SPF::Result->class_by_code($result_code);
+                    my $result_name  = $self->results_by_qualifier->{$mech->qualifier};
+                    my $result_class = $server->result_class($result_name);
                     my $result = $result_class->new($server, $request, "Mechanism '$term' matched");
                     $mech->explain($server, $request, $result);
                     $result->throw();
@@ -410,7 +408,7 @@ sub eval {
         }
         
         # Default result when "falling off" the end of the record (RFC 4408, 4.7/1):
-        throw Mail::SPF::Result::NeutralByDefault($server, $request,
+        $server->throw_result('neutral-by-default', $request,
             'Default neutral result due to no mechanism matches');
     }
     catch Mail::SPF::Result with {

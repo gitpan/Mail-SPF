@@ -2,9 +2,9 @@
 # Mail::SPF::MacroString
 # SPF record macro string class.
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: MacroString.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
+# $Id: MacroString.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -30,7 +30,6 @@ use overload
 use Error ':try';
 use URI::Escape ();
 
-use Mail::SPF::Result;
 use Mail::SPF::Util;
 
 use constant TRUE   => (0 == 0);
@@ -242,7 +241,7 @@ sub expand {
                     }
                     else {
                         # Unexpected IP address version.
-                        throw Mail::SPF::Result::PermError($server, $request,
+                        $server->throw_result('permerror', $request,
                             "Unexpected IP address version '$ip_address_version' in request");
                     }
                 }
@@ -266,7 +265,7 @@ sub expand {
                     }
                     else {
                         # Unexpected IP address version.
-                        throw Mail::SPF::Result::PermError($server, $request,
+                        $server->throw_result('permerror', $request,
                             "Unexpected IP address version '$ip_address_version' in request");
                     }
                 }
@@ -335,7 +334,7 @@ sub expand {
             }
         }
         elsif ($key eq '-') {
-            $expanded .= '-';
+            $expanded .= '%20';
         }
         elsif ($key eq '_') {
             $expanded .= ' ';

@@ -10,6 +10,7 @@ debian/rules
 debian/spf-tools-perl.install
 debian/spf-tools-perl.postinst
 debian/spf-tools-perl.prerm
+debian/watch
 INSTALL
 lib/Mail/SPF.pm
 lib/Mail/SPF/Base.pm
@@ -39,6 +40,7 @@ lib/Mail/SPF/v2/Record.pm
 LICENSE
 Makefile.PL
 MANIFEST			This list of files
+MANIFEST.SKIP
 META.yml
 README
 sbin/spfd

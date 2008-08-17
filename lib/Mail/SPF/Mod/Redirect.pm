@@ -2,9 +2,9 @@
 # Mail::SPF::Mod::Redirect
 # SPF record "redirect" modifier class.
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Redirect.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
+# $Id: Redirect.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -56,11 +56,11 @@ See L<Mail::SPF::Mod/new>.
 
 =back
 
-=item B<new_from_string($text)>: returns I<Mail::SPF::Mod::Redirect>; throws
-I<Mail::SPF::ENothingToParse>, I<Mail::SPF::EInvalidMod>
+=item B<new_from_string($text, %options)>: returns I<Mail::SPF::Mod::Redirect>;
+throws I<Mail::SPF::ENothingToParse>, I<Mail::SPF::EInvalidMod>
 
-Creates a new SPF record C<redirect> modifier object by parsing the given
-string.
+Creates a new SPF record C<redirect> modifier object by parsing the string and
+any options given.
 
 =back
 
@@ -147,7 +147,7 @@ sub process {
     $result = $server->process($sub_request);
     
     # Translate result of sub-request (RFC 4408, 6.1/4):
-    throw Mail::SPF::Result::PermError($server, $request,
+    $server->throw_result('permerror', $request,
         "Redirect domain '$authority_domain' has no applicable sender policy")
         if $result->isa('Mail::SPF::Result::None');
     

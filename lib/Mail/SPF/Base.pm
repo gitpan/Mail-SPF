@@ -2,9 +2,9 @@
 # Mail::SPF::Base
 # Base class for Mail::SPF classes.
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Base.pm 40 2007-01-10 00:00:42Z Julian Mehnle $
+# $Id: Base.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
 #
 ##############################################################################
 

@@ -2,9 +2,9 @@
 # Mail::SPF::Term
 # SPF record term class.
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Term.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
+# $Id: Term.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -53,8 +53,8 @@ use constant macro_string_pattern       => qr/
 /x;
 
 use constant toplabel_pattern           => qr/
-    \p{IsAlnum}*    \p{IsAlpha}    \p{IsAlnum}* |
-    \p{IsAlnum}+ - [\p{IsAlnum}-]* \p{IsAlnum}
+    \p{IsAlnum}+ - [\p{IsAlnum}-]* \p{IsAlnum}  |
+    \p{IsAlnum}*    \p{IsAlpha}    \p{IsAlnum}*
 /x;
 
 use constant domain_end_pattern         => qr/
@@ -115,11 +115,11 @@ I<Abstract>.  Creates a new SPF record term object.
 %options is a list of key/value pairs, however Mail::SPF::Term itself specifies
 no constructor options.
 
-=item B<new_from_string($text)>: returns I<Mail::SPF::Term>; throws
-I<Mail::SPF::ENothingToParse>, I<Mail::SPF::EInvalidTerm>
+=item B<new_from_string($text, %options)>: returns I<Mail::SPF::Term>;
+throws I<Mail::SPF::ENothingToParse>, I<Mail::SPF::EInvalidTerm>
 
-I<Abstract>.  Creates a new SPF record term object by parsing the given
-string.
+I<Abstract>.  Creates a new SPF record term object by parsing the string and
+any options given.
 
 =cut
 
@@ -155,7 +155,7 @@ The following instance methods are provided:
 
 sub parse_domain_spec {
     my ($self, $required) = @_;
-    if ($self->{parse_text} =~ s#^(${\domain_spec_pattern})##) {
+    if ($self->{parse_text} =~ s/^(${\$self->domain_spec_pattern})//) {
         my $domain_spec = $1;
         $domain_spec =~ s/^(.*?)\.?$/\L$1/;
         $self->{domain_spec} = Mail::SPF::MacroString->new(text => $domain_spec);
@@ -169,7 +169,7 @@ sub parse_domain_spec {
 
 sub parse_ipv4_address {
     my ($self, $required) = @_;
-    if ($self->{parse_text} =~ s/^(${\ipv4_address_pattern})//) {
+    if ($self->{parse_text} =~ s/^(${\$self->ipv4_address_pattern})//) {
         $self->{ip_address} = $1;
     }
     elsif ($required) {
@@ -207,7 +207,7 @@ sub parse_ipv4_network {
 
 sub parse_ipv6_address {
     my ($self, $required) = @_;
-    if ($self->{parse_text} =~ s/^(${\ipv6_address_pattern})(?=\/|$)//) {
+    if ($self->{parse_text} =~ s/^(${\$self->ipv6_address_pattern})(?=\/|$)//) {
         $self->{ip_address} = $1;
     }
     elsif ($required) {

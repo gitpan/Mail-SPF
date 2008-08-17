@@ -2,9 +2,9 @@
 # Mail::SPF::v1::Record
 # SPFv1 record class.
 #
-# (C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Record.pm 44 2007-05-30 23:20:51Z Julian Mehnle $
+# $Id: Record.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -109,11 +109,11 @@ sub new {
     return $self;
 }
 
-=item B<new_from_string($text)>: returns I<Mail::SPF::v1::Record>;
+=item B<new_from_string($text, %options)>: returns I<Mail::SPF::v1::Record>;
 throws I<Mail::SPF::ENothingToParse>, I<Mail::SPF::EInvalidRecordVersion>,
 I<Mail::SPF::ESyntaxError>
 
-Creates a new SPFv1 record object by parsing the given string.
+Creates a new SPFv1 record object by parsing the string and any options given.
 
 =back
 

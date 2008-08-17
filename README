@@ -1,5 +1,5 @@
-Mail::SPF 2.005 -- A Perl implementation of the Sender Policy Framework
-(C) 2005-2007 Julian Mehnle <julian@mehnle.net>
+Mail::SPF 2.006 -- A Perl implementation of the Sender Policy Framework
+(C) 2005-2008 Julian Mehnle <julian@mehnle.net>
     2005      Shevek <cpan@anarres.org>
 <http://search.cpan.org/dist/Mail-SPF>
 ==============================================================================
@@ -9,13 +9,29 @@ Framework (SPF) e-mail sender authentication system.
 
 See <http://www.openspf.org> for more information about SPF.
 
-This release of Mail::SPF fully conforms to RFC 4408 and passes the 2007.05
+This release of Mail::SPF fully conforms to RFC 4408 and passes the 2008.08
 release of the official test-suite <http://www.openspf.org/Test_Suite>.
 
 The Mail::SPF source package includes the following additional tools:
 
   * spfquery:  A command-line tool for performing SPF checks.
   * spfd:      A daemon for services that perform SPF checks frequently.
+
+Sub-Classing
+------------
+
+You can easily sub-class Mail::SPF::Server and the Mail::SPF::Result class
+collection in order to extend or modify their behavior.  See the upcoming
+Mail::SPF::BlackMagic package for an example.
+
+In your Mail::SPF::Server sub-class simply override the result_base_class()
+constant, specifying your custom Mail::SPF::Result base sub-class.  Then have
+your result base class specify its associated concrete sub-classes by
+overriding Mail::SPF::Result's result_classes() constant.
+
+For this to work, any code throwing Mail::SPF::Result(::*) objects directly
+needs to stop doing so as of Mail::SPF 2.006 and use Mail::SPF::Server::
+throw_result() instead.
 
 Reporting Bugs
 --------------
@@ -29,5 +45,5 @@ License
 Mail::SPF is free software.  You may use, modify, and distribute it under the
 terms of the BSD license.  See LICENSE for the BSD license text.
 
-# $Id: README 44 2007-05-30 23:20:51Z Julian Mehnle $
+# $Id: README 50 2008-08-17 21:28:15Z Julian Mehnle $
 # vim:tw=79
