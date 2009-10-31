@@ -2,8 +2,8 @@
 # Mail::SPF::Result
 # SPF result class.
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
-# $Id: Result.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
+# (C) 2005-2009 Julian Mehnle <julian@mehnle.net>
+# $Id: Result.pm 53 2009-10-31 21:40:08Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -255,7 +255,7 @@ sub isa_by_name {
 
 I<Abstract>.  Returns the basic SPF result code (C<"pass">, C<"fail">,
 C<"softfail">, C<"neutral">, C<"none">, C<"error">, C<"permerror">,
-C<"permerror">) of the result class on which it is invoked.  All valid result
+C<"temperror">) of the result class on which it is invoked.  All valid result
 codes are valid result names as well, the reverse however does not apply.  This
 method may also be used as an instance method.
 

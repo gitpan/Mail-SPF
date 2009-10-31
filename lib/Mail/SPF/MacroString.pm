@@ -2,9 +2,9 @@
 # Mail::SPF::MacroString
 # SPF record macro string class.
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2009 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: MacroString.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
+# $Id: MacroString.pm 53 2009-10-31 21:40:08Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -35,7 +35,8 @@ use Mail::SPF::Util;
 use constant TRUE   => (0 == 0);
 use constant FALSE  => not TRUE;
 
-use constant default_delimiter      => '.';
+use constant default_split_delimiters   => '.';
+use constant default_join_delimiter     => '.';
 
 use constant uri_unreserved_chars   => 'A-Za-z0-9\-._~';
     # "unreserved" characters according to RFC 3986 -- not the "uric" chars!
@@ -207,8 +208,8 @@ sub expand {
         my $pos = pos($text) - 2;
         
         if ($key eq '{') {
-            if ($text =~ m/ \G (\w|_\p{IsAlpha}+) ([0-9]+)? (r)? ([.\-+,\/_=])? } /cgx) {
-                my ($char, $rh_parts, $reverse, $delimiter) = ($1, $2, $3, $4);
+            if ($text =~ m/ \G (\w|_\p{IsAlpha}+) ([0-9]+)? (r)? ([.\-+,\/_=]*)? } /cgx) {
+                my ($char, $rh_parts, $reverse, $delimiters) = ($1, $2, $3, $4);
                 
                 # Upper-case macro chars trigger URL-escaping AKA percent-encoding
                 # (RFC 4408, 8.1/26):
@@ -304,8 +305,8 @@ sub expand {
                 }
                 
                 if (defined($rh_parts) or defined($reverse)) {
-                    $delimiter ||= $self->default_delimiter;
-                    my @list = split(/\Q$delimiter\E/, $value);
+                    $delimiters ||= $self->default_split_delimiters;
+                    my @list = split(/[\Q$delimiters\E]/, $value);
                     @list = reverse(@list) if defined($reverse);
                     
                     # Extract desired parts:
@@ -317,7 +318,7 @@ sub expand {
                             "Illegal selection of 0 (zero) right-hand parts at pos $pos in macro string '$text'");
                     }
                     
-                    $value = join($self->default_delimiter, @list);
+                    $value = join($self->default_join_delimiter, @list);
                 }
 
                 $value = URI::Escape::uri_escape($value, '^' . $self->uri_unreserved_chars)

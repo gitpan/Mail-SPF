@@ -1,3 +1,21 @@
+mail-spf-perl (2.007) unstable; urgency=low
+
+  Debian:
+  * Standards-Version: 3.8.3 (was: 3.8.0)
+  * Build-Depends-Indep: perl-modules (>= 5.10.0) | libmodule-build-perl (>= 0.26)
+    (was: libmodule-build-perl (>= 0.26))
+
+  Mail::SPF:
+  * Macro expansion:
+    * Distinguish between split and join delimiters; they are not necessarily
+      the same.
+    * Support multiple split delimiters rather than at most one.
+
+  Miscellaneous:
+  * We ship and pass the 2009.10 release of the official RFC 4408 test suite.
+
+ -- Julian Mehnle <julian@mehnle.net>  Sat, 31 Oct 2009 21:29:45 +0000
+
 mail-spf-perl (2.006) unstable; urgency=low
 
   Debian:
@@ -35,7 +53,7 @@ mail-spf-perl (2.006) unstable; urgency=low
     * Generate "identity=mailfrom" rather than "identity=mfrom" in
       "Received-SPF" header field.
     * name() now returns a symbolic result name instead of the trailing part of
-      the result class name.  This should not have no impact on 3rd-party code.
+      the result class name.  This should have no impact on 3rd-party code.
     * Added new isa_by_name() method as an equivalent to the built-in isa(),
       taking a result name instead of a class name.  Provides a superset of the
       is_code() method's functionality.

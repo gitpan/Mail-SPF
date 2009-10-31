@@ -1,5 +1,5 @@
-Mail::SPF 2.006 -- A Perl implementation of the Sender Policy Framework
-(C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+Mail::SPF 2.007 -- A Perl implementation of the Sender Policy Framework
+(C) 2005-2009 Julian Mehnle <julian@mehnle.net>
     2005      Shevek <cpan@anarres.org>
 <http://search.cpan.org/dist/Mail-SPF>
 ==============================================================================
@@ -16,6 +16,27 @@ The Mail::SPF source package includes the following additional tools:
 
   * spfquery:  A command-line tool for performing SPF checks.
   * spfd:      A daemon for services that perform SPF checks frequently.
+
+Mail::SPF is not your mother!
+-----------------------------
+
+Unlike other SPF implementations, Mail::SPF will not do your homework for you.
+
+In particular, in evaluating SPF policies it will not make any exceptions for
+your localhost or loopback addresses (127.0.0.*, ::1, etc.).  There is no way
+for Mail::SPF to know exactly which sending IP addresses you would like to
+treat as trusted relays and which not.  If you don't want messages from certain
+addresses to be subject to SPF processing, then don't invoke Mail::SPF on such
+messages -- it's that simple.  Other libraries have chosen to be more
+accommodating, but that has usually led to consumers getting spoiled and
+implementations becoming fraught with feature creep.
+
+Also, parameter parsing is generally very strict.  For example, no whitespace
+or '<>' characters will be removed from e-mail address or IP address parameters
+passed to Mail::SPF.  If you pass in unsanitized values and it doesn't work,
+don't be surprised.
+
+You may call me a purist.
 
 Sub-Classing
 ------------
@@ -45,5 +66,5 @@ License
 Mail::SPF is free software.  You may use, modify, and distribute it under the
 terms of the BSD license.  See LICENSE for the BSD license text.
 
-# $Id: README 50 2008-08-17 21:28:15Z Julian Mehnle $
+# $Id: README 53 2009-10-31 21:40:08Z Julian Mehnle $
 # vim:tw=79

@@ -3,9 +3,9 @@
 # An object-oriented Perl implementation of Sender Policy Framework.
 # <http://search.cpan.org/dist/Mail-SPF>
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2009 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: SPF.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
+# $Id: SPF.pm 53 2009-10-31 21:40:08Z Julian Mehnle $
 #
 ##############################################################################
 
@@ -17,11 +17,11 @@ Mail::SPF - An object-oriented implementation of Sender Policy Framework
 
 =head1 VERSION
 
-2.006
+2.007
 
 =cut
 
-use version; our $VERSION = qv('2.006');
+use version; our $VERSION = qv('2.007');
 
 use warnings;
 use strict;

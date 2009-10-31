@@ -4,8 +4,8 @@ Section: mail
 Priority: optional
 Maintainer: Julian Mehnle <julian@mehnle.net>
 Build-Depends: debhelper (>= 5)
-Build-Depends-Indep: perl (>= 5.6), libmodule-build-perl (>= 0.26), libnet-dns-resolver-programmable-perl (>= 0.002.1), libversion-perl, liberror-perl, libnetaddr-ip-perl (>= 4), libnet-dns-perl (>= 0.58), liburi-perl (>= 1.13)
-Standards-Version: 3.8.0
+Build-Depends-Indep: perl (>= 5.6), perl-modules (>= 5.10.0) | libmodule-build-perl (>= 0.26), libnet-dns-resolver-programmable-perl (>= 0.002.1), libversion-perl, liberror-perl, libnetaddr-ip-perl (>= 4), libnet-dns-perl (>= 0.58), liburi-perl (>= 1.13)
+Standards-Version: 3.8.3
 
 Package: libmail-spf-perl
 Section: perl

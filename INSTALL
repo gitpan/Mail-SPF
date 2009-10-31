@@ -31,5 +31,16 @@ manually with the following commands:
   ./Build test
   ./Build install
 
-# $Id: INSTALL 44 2007-05-30 23:20:51Z Julian Mehnle $
+If you want to install Mail::SPF without root privileges, then the hard-coded
+installation of the "spfd" executable to /usr/sbin poses a problem (cf.
+rt.cpan.org #34768).  This path had to be hard-coded because Perl's built-in
+Config.pm does not specify an "sbin" path that Module::Build could use as the
+basis for automatic determination of a suitable "sbin" install path.
+
+You can, however, work around this limitation by using the "--install_path"
+option during installation:
+
+  ./Build install --install_path sbin=/desired/sbin/path
+
+# $Id: INSTALL 53 2009-10-31 21:40:08Z Julian Mehnle $
 # vim:tw=79

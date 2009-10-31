@@ -4,6 +4,23 @@
 #   ! = Changed something significant, or removed a feature
 #   * = Fixed a bug, or made a minor improvement
 
+--- 2.007 (2009-10-31 21:00)
+
+  Mail::SPF:
+  * Macro expansion:
+    * Distinguish between split and join delimiters; they are not necessarily
+      the same.
+    * Support multiple split delimiters rather than at most one.
+
+  Miscellaneous:
+  * We ship and pass the 2009.10 release of the official RFC 4408 test suite.
+  * Give advice in INSTALL on how to install without root privileges.
+
+  Debian:
+  * Standards-Version: 3.8.3 (was: 3.8.0)
+  * Build-Depends-Indep: perl-modules (>= 5.10.0) | libmodule-build-perl (>= 0.26)
+    (was: libmodule-build-perl (>= 0.26))
+
 --- 2.006 (2008-08-17 22:00)
 
   Mail::SPF:
@@ -32,7 +49,7 @@
     * Generate "identity=mailfrom" rather than "identity=mfrom" in
       "Received-SPF" header field.
     * name() now returns a symbolic result name instead of the trailing part of
-      the result class name.  This should not have no impact on 3rd-party code.
+      the result class name.  This should have no impact on 3rd-party code.
     * Added new isa_by_name() method as an equivalent to the built-in isa(),
       taking a result name instead of a class name.  Provides a superset of the
       is_code() method's functionality.
@@ -153,5 +170,5 @@
 
 --- 2.000 (initial release) (2005-06-23 00:00)
 
-# $Id: CHANGES 50 2008-08-17 21:28:15Z Julian Mehnle $
+# $Id: CHANGES 54 2009-10-31 22:10:01Z Julian Mehnle $
 # vim:syn=changelog tw=79 sts=2 sw=2
