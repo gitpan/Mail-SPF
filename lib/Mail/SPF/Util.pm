@@ -2,9 +2,9 @@
 # Mail::SPF::Util
 # Mail::SPF utility class.
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Util.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
+# $Id: Util.pm 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -41,27 +41,29 @@ use constant ipv4_mapped_ipv6_address_pattern =>
 =head1 SYNOPSIS
 
     use Mail::SPF::Util;
-    
+
     $hostname = Mail::SPF::Util->hostname;
-    
+
     $ipv6_address_v4mapped =
         Mail::SPF::Util->ipv4_address_to_ipv6($ipv4_address);
-    
+
     $ipv4_address =
         Mail::SPF::Util->ipv6_address_to_ipv4($ipv6_address_v4mapped);
-    
+
     $is_v4mapped =
         Mail::SPF::Util->ipv6_address_is_ipv4_mapped($ipv6_address);
-    
+
     $ip_address_string  = Mail::SPF::Util->ip_address_to_string($ip_address);
     $reverse_name       = Mail::SPF::Util->ip_address_reverse($ip_address);
-    
+
     $validated_domain = Mail::SPF::Util->valid_domain_for_ip_address(
         $spf_server, $request,
         $ip_address, $domain,
         $find_best_match,       # defaults to false
         $accept_any_domain      # defaults to false
     );
+
+    $sanitized_string = Mail::SPF::Util->sanitize_string($string);
 
 =cut
 
@@ -230,26 +232,26 @@ use constant valid_domain_match_identical   => 2;
 
 sub valid_domain_for_ip_address {
     my ($self, $server, $request, $ip_address, $domain, $find_best_match, $accept_any_domain) = @_;
-    
+
     my $addr_rr_type    = $ip_address->version == 4 ? 'A' : 'AAAA';
-    
+
     my $reverse_ip_name = $self->ip_address_reverse($ip_address);
     my $ptr_packet      = $server->dns_lookup($reverse_ip_name, 'PTR');
     my @ptr_rrs         = $ptr_packet->answer
         or $server->count_void_dns_lookup($request);
-    
+
     # Respect the PTR mechanism lookups limit (RFC 4408, 5.5/3/4):
     @ptr_rrs = splice(@ptr_rrs, 0, $server->max_name_lookups_per_ptr_mech)
         if defined($server->max_name_lookups_per_ptr_mech);
-    
+
     my $best_match_type;
     my $valid_domain;
-    
+
     # Check PTR records:
     foreach my $ptr_rr (@ptr_rrs) {
         if ($ptr_rr->type eq 'PTR') {
             my $ptr_domain = $ptr_rr->ptrdname;
-            
+
             my $match_type;
             if ($ptr_domain =~ /^\Q$domain\E$/i) {
                 $match_type = valid_domain_match_identical;
@@ -260,13 +262,13 @@ sub valid_domain_for_ip_address {
             else {
                 $match_type = valid_domain_match_none;
             }
-            
+
             # If we're not accepting _any_ domain, and the PTR domain does not match
             # the requested domain at all, ignore this PTR domain (RFC 4408, 5.5/5):
             next if not $accept_any_domain and $match_type == valid_domain_match_none;
-            
+
             my $is_valid_domain = FALSE;
-            
+
             try {
                 my $addr_packet = $server->dns_lookup($ptr_domain, $addr_rr_type);
                 my @addr_rrs    = $addr_packet->answer
@@ -295,15 +297,15 @@ sub valid_domain_for_ip_address {
             }
             catch Mail::SPF::EDNSError with {};
                 # Ignore DNS errors on doing A/AAAA RR lookups (RFC 4408, 5.5/5/5).
-            
+
             if ($is_valid_domain) {
                 # If we're not looking for the _best_ match, any acceptable validated
                 # domain will do (RFC 4408, 5.5/5):
                 return $ptr_domain if not $find_best_match;
-                
+
                 # Otherwise, is this PTR domain the best possible match?
                 return $ptr_domain if $match_type == valid_domain_match_identical;
-                
+
                 # Lastly, record this match as the best one as of yet:
                 if (
                     not defined($best_match_type) or
@@ -319,9 +321,27 @@ sub valid_domain_for_ip_address {
             # TODO Generate debug info or ignore silently.
         }
     }
-    
+
     # Return best match, possibly none (undef):
     return $valid_domain;
+}
+
+=item B<sanitize_string($string)>: returns I<string> or B<undef>
+
+Replaces all non-printable or non-ascii characters in a string with their
+hex-escaped representation (e.g., C<\x00>).
+
+=cut
+
+sub sanitize_string {
+    my ($self, $string) = @_;
+
+    return undef if not defined($string);
+
+    $string =~ s/([\x00-\x1f\x7f-\xff])/sprintf("\\x%02x",   ord($1))/gex;
+    $string =~ s/([\x{0100}-\x{ffff}]) /sprintf("\\x{%04x}", ord($1))/gex;
+
+    return $string;
 }
 
 =back

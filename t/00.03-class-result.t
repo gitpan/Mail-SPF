@@ -36,11 +36,12 @@ BEGIN { use_ok('Mail::SPF::Result') }
         eval { throw Mail::SPF::Result('server', 'request', 'result text') };
         $@->throw('other server', 'other request', 'other text');
     };
+    my $result = $@;
 
-    isa_ok($@,                     'Mail::SPF::Result', 'Param-rethrown result object');
-    is($@->server,                  'other server',     'Param-rethrown result server()');
-    is($@->request,                 'other request',    'Param-rethrown result request()');
-    is($@->text,                    'other text',       'Param-rethrown result text()');
+    isa_ok($result,                'Mail::SPF::Result', 'Param-rethrown result object');
+    is($result->server,             'other server',     'Param-rethrown result server()');
+    is($result->request,            'other request',    'Param-rethrown result request()');
+    is($result->text,               'other text',       'Param-rethrown result text()');
 }
 
 

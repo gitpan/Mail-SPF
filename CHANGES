@@ -4,6 +4,37 @@
 #   ! = Changed something significant, or removed a feature
 #   * = Fixed a bug, or made a minor improvement
 
+--- 2.008 (2012-01-30 08:15)
+
+  Mail::SPF:
+  * Sanitize result local_explanation (as well as result object string
+    representation) by replacing all non-printable or non-ascii characters
+    with their hex-escaped representation (e.g., "\x00").
+    (Addresses: bugs.launchpad.net #806926)
+
+  Miscellaneous:
+  * Change openspf.org URLs to openspf.net because openspf.org is unreachable
+    indefinitely.
+  * Change <http://www.ietf.org/rfc/….txt> URLs
+    to <http://tools.ietf.org/html/…>.
+  * META.yml: configure_requires: Module::Build 0.2805
+  * META.yml: requires: Net::DNS 0.62 (was: 0.52) (Closes: rt.cpan.org #28545)
+  * META.yml: Revert to flat version numbers for perl and Net::DNS::Resolver::
+    Programmable build requirements to avoid Module::Build::Compat/Makefile.PL
+    incompatibilities. (Closes: rt.cpan.org #53231)
+  * Attempt to prevent a cascading failure in t/00.03-class-result.t that seems
+    to happen under rare, unknown circumstances. (Closes: rt.cpan.org #39099)
+
+  Debian:
+  * Declare Debian source package format as 3.0.
+  * Standards-Version: 3.9.2 (was: 3.8.3)
+  * Bump debhelper compatibility level to 7 (was: 5) and simplify debian/rules
+    using debhelper 7 features.
+  * debian/control: Simplify depdendencies under the assumption that package
+    will be installed on Debian Lenny (oldstable at the time of writing) or
+    later (or the Ubuntu equivalent).
+  * debian/watch: Use dist-based URL.
+
 --- 2.007 (2009-10-31 21:00)
 
   Mail::SPF:
@@ -170,5 +201,5 @@
 
 --- 2.000 (initial release) (2005-06-23 00:00)
 
-# $Id: CHANGES 54 2009-10-31 22:10:01Z Julian Mehnle $
-# vim:syn=changelog tw=79 sts=2 sw=2
+# $Id: CHANGES 59 2012-01-30 08:57:32Z julian $
+# vim:syn= tw=79 sts=2 sw=2

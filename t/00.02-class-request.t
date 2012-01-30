@@ -96,28 +96,28 @@ BEGIN { use_ok('Mail::SPF::Request') }
 
 {
     my $request;
-    
+
     $request = Mail::SPF::Request->new(
         versions    => 1,
         valid_mfrom_identity,
         valid_ip_address
     );
     is_deeply([$request->versions], [1],                'versions => $string supported');
-    
+
     eval { Mail::SPF::Request->new(
         versions    => {},  # Illegal versions option type!
         valid_mfrom_identity,
         valid_ip_address
     ) };
     isa_ok($@, 'Mail::SPF::EInvalidOptionValue',        'versions => $non_string_or_array illegal');
-    
+
     eval { Mail::SPF::Request->new(
         versions    => [1, 666],  # Illegal version number!
         valid_mfrom_identity,
         valid_ip_address
     ) };
     isa_ok($@, 'Mail::SPF::EInvalidOptionValue',        'Detect illegal versions');
-    
+
     $request = Mail::SPF::Request->new(
         versions    => [1, 2],
         scope       => 'helo',
@@ -152,7 +152,7 @@ BEGIN { use_ok('Mail::SPF::Request') }
 
 {
     my $request;
-    
+
     eval { Mail::SPF::Request->new(
         valid_ip_address
     ) };
@@ -172,7 +172,7 @@ BEGIN { use_ok('Mail::SPF::Request') }
 
 {
     my $request;
-    
+
     eval { Mail::SPF::Request->new(
         valid_mfrom_identity
     ) };

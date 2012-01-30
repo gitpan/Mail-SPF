@@ -3,9 +3,9 @@
 # An object-oriented Perl implementation of Sender Policy Framework.
 # <http://search.cpan.org/dist/Mail-SPF>
 #
-# (C) 2005-2009 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: SPF.pm 53 2009-10-31 21:40:08Z Julian Mehnle $
+# $Id: SPF.pm 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -17,11 +17,11 @@ Mail::SPF - An object-oriented implementation of Sender Policy Framework
 
 =head1 VERSION
 
-2.007
+2.008
 
 =cut
 
-use version; our $VERSION = qv('2.007');
+use version; our $VERSION = qv('2.008');
 
 use warnings;
 use strict;
@@ -35,9 +35,9 @@ use constant FALSE  => not TRUE;
 =head1 SYNOPSIS
 
     use Mail::SPF;
-    
+
     my $spf_server  = Mail::SPF::Server->new();
-    
+
     my $request     = Mail::SPF::Request->new(
         versions        => [1, 2],              # optional
         scope           => 'mfrom',             # or 'helo', 'pra'
@@ -46,9 +46,9 @@ use constant FALSE  => not TRUE;
         helo_identity   => 'mta.example.com'    # optional,
                                                 #   for %{h} macro expansion
     );
-    
+
     my $result      = $spf_server->process($request);
-    
+
     print("$result\n");
     my $result_code     = $result->code;        # 'pass', 'fail', etc.
     my $local_exp       = $result->local_explanation;
@@ -59,7 +59,7 @@ use constant FALSE  => not TRUE;
 =head1 DESCRIPTION
 
 B<Mail::SPF> is an object-oriented implementation of Sender Policy Framework
-(SPF).  See L<http://www.openspf.org> for more information about SPF.
+(SPF).  See L<http://www.openspf.net> for more information about SPF.
 
 This class collection aims to fully conform to the SPF specification (RFC
 4408) so as to serve both as a production quality SPF implementation and as a
@@ -78,11 +78,11 @@ included with Mail::SPF.
 
 =item The SPF project
 
-L<http://www.openspf.org>
+L<http://www.openspf.net>
 
 =item The SPFv1 specification (RFC 4408)
 
-L<http://www.openspf.org/Specifications>, L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://www.openspf.net/Specifications>, L<http://tools.ietf.org/html/rfc4408>
 
 =back
 

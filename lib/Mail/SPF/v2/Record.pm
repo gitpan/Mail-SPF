@@ -2,9 +2,9 @@
 # Mail::SPF::v2::Record
 # Sender ID ("spf2.0") record class.
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Record.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
+# $Id: Record.pm 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -95,7 +95,7 @@ are supported.  There is no default.
 sub new {
     my ($self, %options) = @_;
     $self = $self->SUPER::new(%options);
-    
+
     if (not defined($self->{parse_text})) {
         # No parsing is intended, so scopes should have been specified:
         my $scopes = $self->{scopes} || [];
@@ -106,7 +106,7 @@ sub new {
                 or throw Mail::SPF::EInvalidScope("Invalid scope '$scope' for spf2.0 record");
         }
     }
-    
+
     return $self;
 }
 
@@ -209,7 +209,7 @@ sub version_tag {
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>, L<Mail::SPF::Mech>,
 L<Mail::SPF::Mod>
 
-L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://tools.ietf.org/html/rfc4408>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

@@ -2,9 +2,9 @@
 # Mail::SPF::Mod::Exp
 # SPF record "exp" modifier class.
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Exp.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
+# $Id: Exp.pm 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -134,7 +134,7 @@ details.
 
 sub process {
     my ($self, $server, $request, $result) = @_;
-    
+
     try {
         my $exp_domain = $self->{domain_spec}->new(server => $server, request => $request);
         my $txt_packet = $server->dns_lookup($exp_domain, 'TXT');
@@ -156,7 +156,7 @@ sub process {
     # Ignore DNS and other errors:
     catch Mail::SPF::EDNSError with {}
     catch Mail::SPF::Result::Error with {};
-    
+
     return;
 }
 
@@ -168,7 +168,7 @@ See L<Mail::SPF::Mod> for other supported instance methods.
 
 L<Mail::SPF>, L<Mail::SPF::Mod>, L<Mail::SPF::Term>, L<Mail::SPF::Record>
 
-L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://tools.ietf.org/html/rfc4408>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

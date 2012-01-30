@@ -2,9 +2,9 @@
 # Mail::SPF::v1::Record
 # SPFv1 record class.
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Record.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
+# $Id: Record.pm 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -93,7 +93,7 @@ C<helo> and C<mfrom> scopes, this option must either be exactly B<['helo',
 sub new {
     my ($self, %options) = @_;
     $self = $self->SUPER::new(%options);
-    
+
     if (defined(my $scopes = $self->{scopes})) {
         @$scopes > 0
             or throw Mail::SPF::EInvalidScope('No scopes for v=spf1 record');
@@ -105,7 +105,7 @@ sub new {
             or throw Mail::SPF::EInvalidScope(
                 "Invalid set of scopes " . join(', ', map("'$_'", @$scopes)) . " for v=spf1 record");
     }
-    
+
     return $self;
 }
 
@@ -168,7 +168,7 @@ Returns B<'v=spf1'>.
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>, L<Mail::SPF::Mech>,
 L<Mail::SPF::Mod>
 
-L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://tools.ietf.org/html/rfc4408>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

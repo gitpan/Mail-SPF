@@ -3,7 +3,7 @@
 # 
 # spfquery: Command-line tool for performing SPF queries
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2004      Wayne Schlitt <wayne@schlitt.net>
 # $Id: spfquery 138 2006-01-22 18:00:34Z julian $
 #
@@ -52,7 +52,7 @@ B<spfquery> B<--help>
 
 B<spfquery> checks if a given set of e-mail parameters (e.g., the SMTP sender's
 IP address) matches the responsible domain's Sender Policy Framework (SPF)
-policy.  For more information on SPF see L<http://www.openspf.org>.
+policy.  For more information on SPF see L<http://www.openspf.net>.
 
 =head2 Preferred Usage
 
@@ -315,7 +315,7 @@ preferred synonyms:
 
 L<Mail::SPF>, L<spfd(8)>
 
-L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://tools.ietf.org/html/rfc4408>
 
 =head1 AUTHORS
 
@@ -476,9 +476,9 @@ sub black_magic_option {
 my $options = {};
 my $getopt_result = GetOptions(
     $options,
-    
+
     'file|f=s',
-    
+
     'versions|v=s',
     'scope=s',
     's=s',  # Special handling for ambiguous 's' option (formerly a synonym
@@ -486,18 +486,18 @@ my $getopt_result = GetOptions(
     'identity|id=s',
     'ip-address|ip=s',
     'helo-identity|helo-id=s',
-    
+
     # Legacy/shortcut options:
     'mfrom|mail-from|m=s',
     'helo|h=s',
-    
+
     'default-explanation|def-exp=s',
     'hostname=s',
-    
+
     'keep-comments!',
     'debug!',       # TODO Implement!
     'sanitize!',    # TODO Implement!
-    
+
     # Black Magic options:
     'enable-black-magic!',
     'max-dns-interactive-terms=i',
@@ -509,11 +509,11 @@ my $getopt_result = GetOptions(
     'local=s',      # TODO Implement!
     'override=s%',  # TODO Implement!
     'fallback=s%',  # TODO Implement!
-    
+
     # Meta actions:
     'version|V!',
     'help!',
-    
+
     # Deprecated options:
     'sender=s',     # Now 'scope'/'identity' or 'mfrom'
     'ipv4=s',       # Now 'ip-address'

@@ -1,3 +1,31 @@
+mail-spf-perl (2.008) unstable; urgency=low
+
+  Debian:
+  * Declare source package format as 3.0.
+  * Standards-Version: 3.9.2 (was: 3.8.3)
+  * Bump debhelper compatibility level to 7 (was: 5) and simplify debian/rules
+    using debhelper 7 features.
+  * debian/control: Simplify depdendencies under the assumption that package
+    will be installed on Debian Lenny (oldstable at the time of writing) or
+    later (or the Ubuntu equivalent).
+  * debian/watch: Use dist-based URL.
+
+  Mail::SPF:
+  * Sanitize result local_explanation (as well as result object string
+    representation) by replacing all non-printable or non-ascii characters
+    with their hex-escaped representation (e.g., "\x00").
+    (Addresses: bugs.launchpad.net #806926)
+
+  Miscellaneous:
+  * Change openspf.org URLs to openspf.net because openspf.org is unreachable
+    indefinitely.
+  * Change <http://www.ietf.org/rfc/….txt> URLs
+    to <http://tools.ietf.org/html/…>.
+  * Attempt to prevent a cascading failure in t/00.03-class-result.t that seems
+    to happen under rare, unknown circumstances. (Closes: rt.cpan.org #39099)
+
+ -- Julian Mehnle <julian@mehnle.net>  Mon, 30 Jan 2012 08:31:42 +0000
+
 mail-spf-perl (2.007) unstable; urgency=low
 
   Debian:

@@ -2,9 +2,9 @@
 # Mail::SPF::Request
 # SPF request class.
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Request.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
+# $Id: Request.pm 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -47,7 +47,7 @@ use constant default_localpart => 'postmaster';
 =head1 SYNOPSIS
 
     use Mail::SPF;
-    
+
     my $request = Mail::SPF::Request->new(
         versions    => [1, 2],              # optional
         scope       => 'mfrom',             # or 'helo', 'pra'
@@ -56,7 +56,7 @@ use constant default_localpart => 'postmaster';
         helo_identity                       # optional,
                     => 'mta.example.com'    #   for %{h} macro expansion
     );
-    
+
     my @versions    = $request->versions;
     my $scope       = $request->scope;
     my $authority_domain
@@ -69,10 +69,10 @@ use constant default_localpart => 'postmaster';
                     = $request->ip_address_v6;  #   IPv4-mapped IPv6 address
     my $helo_identity                           # additional HELO identity
                     = $request->helo_identity;  #   for non-HELO scopes
-    
+
     my $record      = $request->record;
         # the record selected during processing of the request, may be undef
-    
+
     $request->state(field => 'value');
     my $value = $request->state('field');
 
@@ -201,18 +201,18 @@ If the main identity is of the C<helo> scope, this option is unused.
 
 sub new {
     my ($self, %options) = @_;
-    
+
     # Create new object:
     $self = $self->SUPER::new(%options);
     # If the request object already has a state hash, clone its contents:
     $self->{state} = { %{$self->{state}} }
         if ref($self->{state}) eq 'HASH';
-    
+
     # Scope:
     $self->{scope} ||= 'mfrom';
     my $versions_for_scope = $self->versions_for_scope->{$self->{scope}}
         or throw Mail::SPF::EInvalidScope("Invalid scope '$self->{scope}'");
-    
+
     # Versions:
     if (not defined($self->{versions})) {
         # No versions specified, use all versions relevant to scope:
@@ -228,7 +228,7 @@ sub new {
             throw Mail::SPF::EInvalidOptionValue(
                 "'versions' option must be string or array-ref");
         }
-        
+
         # All requested record versions must be supported:
         my @unsupported_versions = grep(
             (not defined($self->scopes_by_version->{$_})),
@@ -238,27 +238,27 @@ sub new {
             or throw Mail::SPF::EInvalidOptionValue(
                 'Unsupported record version(s) ' .
                 join(', ', map("'$_'", @unsupported_versions)));
-        
+
         # Use only those record versions that are relevant to the requested scope:
         my %versions_for_scope;
            @versions_for_scope{@$versions_for_scope} = ();
         my @versions = grep(exists($versions_for_scope{$_}), @{$self->{versions}});
-        
+
         # Require at least one relevant record version that covers the scope:
         @versions
             or throw Mail::SPF::EInvalidScope(
                 "Invalid scope '$self->{scope}' for record version(s) " .
                 join(', ', @{$self->{versions}}));
-        
+
         $self->{versions} = \@versions;
     }
-    
+
     # Identity:
     defined($self->{identity})
         or throw Mail::SPF::EOptionRequired("Missing required 'identity' option");
     length($self->{identity})
         or throw Mail::SPF::EInvalidOptionValue("'identity' option must not be empty");
-    
+
     # Extract domain and localpart from identity:
     if (
         ($self->{scope} eq 'mfrom' or $self->{scope} eq 'pra') and
@@ -274,24 +274,24 @@ sub new {
         # Lower-case domain and remove eventual trailing dot.
     $self->{localpart} = $self->default_localpart
         if not defined($self->{localpart}) or not length($self->{localpart});
-    
+
     # HELO identity:
     if ($self->{scope} eq 'helo') {
         $self->{helo_identity} ||= $self->{identity};
     }
-    
+
     # IP address:
     throw Mail::SPF::EOptionRequired("Missing required 'ip_address' option")
         if  grep($self->{scope} eq $_, qw(helo mfrom pra))
         and not defined($self->{ip_address});
-    
+
     # Ensure ip_address is a NetAddr::IP object:
     if (not UNIVERSAL::isa($self->{ip_address}, 'NetAddr::IP')) {
         my $ip_address = NetAddr::IP->new($self->{ip_address})
             or throw Mail::SPF::EInvalidOptionValue("Invalid IP address '$self->{ip_address}'");
         $self->{ip_address} = $ip_address;
     }
-    
+
     # Convert IPv4 address to IPv4-mapped IPv6 address:
     if (Mail::SPF::Util->ipv6_address_is_ipv4_mapped($self->{ip_address})) {
         $self->{ip_address_v6} = $self->{ip_address};  # Accept as IPv6 address as-is.
@@ -307,7 +307,7 @@ sub new {
         throw Mail::SPF::EInvalidOptionValue(
             "Unexpected IP address version '" . $self->{ip_address}->version . "'");
     }
-    
+
     return $self;
 }
 
@@ -470,7 +470,7 @@ sub state :lvalue {
 
 L<Mail::SPF>, L<Mail::SPF::Server>
 
-L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://tools.ietf.org/html/rfc4408>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

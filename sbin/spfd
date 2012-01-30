@@ -2,8 +2,8 @@
 
 #
 # spfd: Simple forking SPF query service daemon
-# 
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+#
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2003-2004 Meng Weng Wong <mengwong+spf@pobox.com>
 # $Id: spfd 148 2006-06-17 21:50:57Z Julian Mehnle $
 #
@@ -35,7 +35,7 @@ B<spfd> B<--help>
 
 B<spfd> is a simple forking Sender Policy Framework (SPF) query server.  spfd
 receives and answers SPF requests on a TCP/IP or UNIX domain socket.  For more
-information on SPF see L<http://www.openspf.org>.
+information on SPF see L<http://www.openspf.net>.
 
 The B<--port> form listens on a TCP/IP socket on the specified I<port>.  The
 default port is B<5970>.
@@ -200,7 +200,7 @@ breaks added for clarity):
     result=fail
     local_explanation=example.com: Sender is not authorized by default to use
         'user@example.com' in 'mfrom' identity (mechanism '-all' matched)
-    authority_explanation=Please see http://www.openspf.org/why.html?
+    authority_explanation=Please see http://www.openspf.net/why.html?
         sender=user%40example.com&ip=1.2.3.4&receiver=localhost
     received_spf_header=Received-SPF: fail (example.com: Sender is not
         authorized by default to use 'user@example.com' in 'mfrom' identity
@@ -273,7 +273,7 @@ scope directly.
 
 L<Mail::SPF>, L<spfquery(1)>
 
-L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://tools.ietf.org/html/rfc4408>
 
 =head1 AUTHORS
 
@@ -337,7 +337,7 @@ sub deprecated_option {
 my $options = {};
 my $getopt_result = GetOptions(
     $options,
-    
+
     'port|p=i',
     'socket|s=s',
     'socket-user=s',
@@ -345,15 +345,15 @@ my $getopt_result = GetOptions(
     'socket-perms=s',
     'set-user|u=s',
     'set-group=s',
-    
+
     'default-explanation|def-exp=s',
     'hostname=s',
 
     'debug!',
-    
+
     # Black Magic options:
     'enable-black-magic!',
-    
+
     # Meta actions:
     'version|V!',
     'help!',
@@ -441,7 +441,7 @@ if (defined($port)) {
         ReuseAddr   => TRUE
     );
     print("spfd (PID $$): Listening on TCP/IP port $port.\n");
-#    $0 = "spfd listening on TCP port $port";
+    #$0 = "spfd listening on TCP port $port";
 }
 elsif (defined($socket_path)) {
     require IO::Socket::UNIX;
@@ -452,14 +452,14 @@ elsif (defined($socket_path)) {
         Local       => $socket_path
     );
     print("spfd (PID $$): Listening on UNIX socket '$socket_path'.\n");
-#    $0 = "spfd listening on UNIX socket $socket_path";
-    
+    #$0 = "spfd listening on UNIX socket $socket_path";
+
     $socket_user  = normalize_uid($socket_user);
     $socket_group = normalize_gid($socket_group);
     chown($socket_user, $socket_group, $socket_path)
         or die("Unable to chown($socket_user, $socket_group) socket '$socket_path'")
         if $socket_user != -1 or $socket_path != -1;
-    
+
     chmod(oct($socket_perms), $socket_path)
         or die("Unable to chmod($socket_perms) socket '$socket_path': $!")
         if defined($socket_perms);
@@ -483,7 +483,7 @@ my $spf_server = Mail::SPF::Server->new(
     default_authority_explanation
                     => $default_explanation,
     hostname        => $hostname,
-    
+
     # Black Magic:
     # TODO
     # max-dns-interactive-terms
@@ -506,9 +506,9 @@ while (my $socket = $listen_socket->accept()) {
         # The child exits immediately in order to avoid zombies:
         exit;
     }
-    
+
     # Grand-child process.
-    
+
     my $time = gmtime;
     if ($debug) {
         my $peerinfo =
@@ -518,10 +518,10 @@ while (my $socket = $listen_socket->accept()) {
         print("\n");
         print("[$time] Incoming connection" . $peerinfo . "\n");
     }
-    
+
     try {
         $socket->autoflush(TRUE);
-        
+
         my $request_values = {};
         while (<$socket>) {
             s/\s+$//;
@@ -531,13 +531,13 @@ while (my $socket = $listen_socket->accept()) {
             $key = deprecated_request_keys->{$key}
                 if defined(deprecated_request_keys->{$key});
             $request_values->{$key} = $value;
-            
+
             print("[$time] R: $key=$value\n")
                 if $debug;
         }
-        
+
         my @versions = split(',', $request_values->{versions} || '');
-        
+
         my $request = Mail::SPF::Request->new(
             versions        => @versions ? [@versions] : undef,
             scope           => $request_values->{scope},
@@ -545,9 +545,9 @@ while (my $socket = $listen_socket->accept()) {
             ip_address      => $request_values->{ip_address},
             helo_identity   => $request_values->{helo_identity}
         );
-        
+
         my $result = $spf_server->process($request);
-        
+
         my $response_values = {};
         $response_values->{result}                  = $result->code;
         $response_values->{local_explanation}       = $result->local_explanation;
@@ -556,14 +556,14 @@ while (my $socket = $listen_socket->accept()) {
         $response_values->{received_spf_header}     = $result->received_spf_header;
         $response_values->{spf_record}              = $result->request->root_request->record
             if defined($result->request->root_request->record);
-        
+
         # Legacy response values:
         $response_values->{smtp_comment}            =
             defined($response_values->{authority_explanation}) ?
                 $response_values->{authority_explanation}
             :   $response_values->{local_explanation};
         $response_values->{header_comment}          = $response_values->{local_explanation};
-        
+
         foreach my $key (qw(
             result local_explanation authority_explanation received_spf_header spf_record
             smtp_comment header_comment
@@ -578,9 +578,9 @@ while (my $socket = $listen_socket->accept()) {
         my ($e) = @_;
         printf("[$time] An error occurred: %s\n", $e->text);
     };
-    
+
     $socket->close();
-    
+
     exit;
 }
 

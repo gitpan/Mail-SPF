@@ -14,3 +14,4 @@
 \.swp$
 \.tar\.gz$
 ~$
+^MYMETA.yml$

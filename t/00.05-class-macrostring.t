@@ -42,13 +42,13 @@ BEGIN { use_ok('Mail::SPF::MacroString') }
         server  => $server,
         request => $request
     ) };
-    
+
     $@ eq '' and isa_ok($macrostring, 'Mail::SPF::MacroString', 'Early-context macro-string object')
         or BAIL_OUT("Early-context macro-string instantiation failed: $@");
-    
+
     # Have options been interpreted correctly?
     is($macrostring->text,      valid_macrostring_text, 'Early-context macro-string text()');
-    
+
     # Expansion:
     is($macrostring->expand, valid_macrostring_expanded, 'Early-context macro-string expand()');
     is($macrostring,         valid_macrostring_expanded, 'Early-context macro-string stringify() (+overloading)');
@@ -61,13 +61,13 @@ BEGIN { use_ok('Mail::SPF::MacroString') }
     my $macrostring = eval { Mail::SPF::MacroString->new(
         text    => '%{ir}.%{v}._spf.%{d2}'
     ) };
-    
+
     $@ eq '' and isa_ok($macrostring, 'Mail::SPF::MacroString', 'Late-context macro-string object')
         or BAIL_OUT("Late-context macro-string instantiation failed: $@");
-    
+
     # Context-less stringify():
     is($macrostring,            valid_macrostring_text, 'Late-context macro-string context-less stringify() (+overloading)');
-    
+
     # Context-less expand():
     eval { $macrostring->expand };
     isa_ok($@, 'Mail::SPF::EMacroExpansionCtxRequired', 'Late-context macro-string context-less expand() illegal');
@@ -76,7 +76,7 @@ BEGIN { use_ok('Mail::SPF::MacroString') }
     is($macrostring->expand($server, $request),
                             valid_macrostring_expanded, 'Late-context macro-string expand(context)');
     is($macrostring,            valid_macrostring_text, 'Late-context macro-string context-less stringify() (+overloading) after expand(context)');
-    
+
     # Expansion with permanent context:
     $macrostring->context($server, $request);
     is($macrostring->expand, valid_macrostring_expanded, 'Late-context macro-string context-ful expand()');

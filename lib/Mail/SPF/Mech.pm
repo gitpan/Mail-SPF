@@ -2,9 +2,9 @@
 # Mail::SPF::Mech
 # SPF record mechanism class.
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Mech.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
+# $Id: Mech.pm 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -327,18 +327,18 @@ Mail::SPF::Mech.
 
 sub match_in_domain {
     my ($self, $server, $request, $domain) = @_;
-    
+
     $domain = $self->domain($server, $request)
         if not defined($domain);
-    
+
     my $ipv4_prefix_length = $self->ipv4_prefix_length;
     my $ipv6_prefix_length = $self->ipv6_prefix_length;
     my $addr_rr_type       = $request->ip_address->version == 4 ? 'A' : 'AAAA';
-    
+
     my $packet             = $server->dns_lookup($domain, $addr_rr_type);
     my @rrs                = $packet->answer
         or $server->count_void_dns_lookup($request);
-    
+
     foreach my $rr (@rrs) {
         if ($rr->type eq 'A') {
             my $network = NetAddr::IP->new($rr->address, $ipv4_prefix_length);
@@ -427,7 +427,7 @@ L<Mail::SPF::Mech::Include>
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>
 
-L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://tools.ietf.org/html/rfc4408>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

@@ -3,8 +3,8 @@
 # Abstract base class for SPF record mechanisms that operate on the SMTP
 # sender's IP address.
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
-# $Id: SenderIPAddrMech.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
+# $Id: SenderIPAddrMech.pm 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -61,7 +61,7 @@ L<Mail::SPF::Mech::A>,
 L<Mail::SPF::Mech::MX>,
 L<Mail::SPF::Mech::PTR>
 
-L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://tools.ietf.org/html/rfc4408>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

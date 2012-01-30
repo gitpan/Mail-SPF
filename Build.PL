@@ -1,8 +1,8 @@
 #
 # Module::Build build script for Mail::SPF
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
-# $Id: Build.PL 50 2008-08-17 21:28:15Z Julian Mehnle $
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
+# $Id: Build.PL 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -19,13 +19,13 @@ my $class = Module::Build->subclass( code => <<'EOF' );
                 wanted      => sub {
                     $File::Find::prune = 1 if -d and /\.svn$/;  # Exclude .svn/ dirs.
                     return if not -f;                           # Handle files only.
-                    
+
                     my $destination = $self->copy_if_modified(
                         from    => $File::Find::name,
                         to      => File::Spec->catfile($self->blib, $File::Find::name)
                     );
                     return if not defined($destination);        # Already up to date?
-                    
+
                     chmod((stat($File::Find::name))[2], $destination)
                         or warn("Cannot set permissions on $destination: $!");
                 },
@@ -34,46 +34,49 @@ my $class = Module::Build->subclass( code => <<'EOF' );
             $dir
         );
     }
-    
+
     sub process_sbin_files    { shift->process_extra_files('sbin')    }
 
 EOF
 
 my $build = $class->new(
-    module_name     => 'Mail::SPF',
-    dist_author     => [
+    module_name         => 'Mail::SPF',
+    dist_author         => [
         'Julian Mehnle <julian@mehnle.net>',
         'Shevek <cpan@anarres.org>'
     ],
-    license         => 'bsd',
-    requires        => {
+    license             => 'bsd',
+    requires            => {
         # Core requirements:
-        perl            => 'v5.6',
-        version         => 0,
-        Error           => 0,
-        NetAddr::IP     => '4',
-        Net::DNS        => '0.58',
-        URI             => '1.13'
+        perl                => '5.006',
+        version             => 0,
+        Error               => 0,
+        NetAddr::IP         => '4',
+        Net::DNS            => '0.62',
+        URI                 => '1.13'
     },
-    recommends      => {
-        NetAddr::IP     => '4.007'  # has all $& and $` removed for better performance
+    recommends          => {
+        NetAddr::IP         => '4.007'  # has all $& and $` removed for better performance
     },
-    build_requires  => {
+    configure_requires  => {
+        # Configuration requirements:
+        Module::Build       => '0.2805'
+    },
+    build_requires      => {
         # Build requirements:
-        Module::Build   => '0.2805',
-        Test::More      => 0,
+        Module::Build       => '0.2805',
+        Test::More          => 0,
         Net::DNS::Resolver::Programmable
-                        => 'v0.002.1',
+                            => '0.002001',
     },
-    script_files    => [
+    script_files        => [
         'bin/spfquery'
     ],
-    install_path    => {
-        'sbin'          => '/usr/sbin'
+    install_path        => {
+        'sbin'              => '/usr/sbin'
     },
-    create_makefile_pl
-                    => 'passthrough',
-    sign            => 1
+    create_makefile_pl  => 'passthrough',
+    sign                => 1
 );
 
 $build->add_build_element($_)

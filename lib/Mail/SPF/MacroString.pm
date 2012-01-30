@@ -2,9 +2,9 @@
 # Mail::SPF::MacroString
 # SPF record macro string class.
 #
-# (C) 2005-2009 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: MacroString.pm 53 2009-10-31 21:40:08Z Julian Mehnle $
+# $Id: MacroString.pm 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -55,25 +55,25 @@ use constant macos_epoch_offset     => ((1970 - 1904) * 365 + 17) * 24 * 3600;
 =head2 Providing the expansion context early
 
     use Mail::SPF::MacroString;
-    
+
     my $macrostring = Mail::SPF::MacroString->new(
         text    => '%{ir}.%{v}._spf.%{d2}',
         server  => $server,
         request => $request
     );
-    
+
     my $expanded = $macrostring->expand;
 
 =head2 Providing the expansion context late
 
     use Mail::SPF::MacroString;
-    
+
     my $macrostring = Mail::SPF::MacroString->new(
         text    => '%{ir}.%{v}._spf.%{d2}'
     );
-    
+
     my $expanded1 = $macrostring->expand($server, $request1);
-    
+
     $macrostring->context($server, $request2);
     my $expanded2 = $macrostring->expand;
 
@@ -185,38 +185,38 @@ the resulting string.  See RFC 4408, 8, for how macros are expanded.
 
 sub expand {
     my ($self, @context) = @_;
-    
+
     return $self->{expanded}
         if defined($self->{expanded});
-    
+
     my $text = $self->{text};
     return undef
         if not defined($text);
-    
+
     return $self->{expanded} = $text
         if $text !~ /%/;  # Short-circuit expansion if text has no '%' character.
 
     my ($server, $request) = @context ? @context : ($self->{server}, $self->{request});
     $self->_is_valid_context(TRUE, $server, $request);
-    
+
     my $expanded = '';
     pos($text) = 0;
-    
+
     while ($text =~ m/ \G (.*?) %(.) /cgx) {
         $expanded .= $1;
         my $key = $2;
         my $pos = pos($text) - 2;
-        
+
         if ($key eq '{') {
             if ($text =~ m/ \G (\w|_\p{IsAlpha}+) ([0-9]+)? (r)? ([.\-+,\/_=]*)? } /cgx) {
                 my ($char, $rh_parts, $reverse, $delimiters) = ($1, $2, $3, $4);
-                
+
                 # Upper-case macro chars trigger URL-escaping AKA percent-encoding
                 # (RFC 4408, 8.1/26):
                 my $do_percent_encode = $char =~ tr/A-Z/a-z/;
-                
+
                 my $value;
-                
+
                 if    ($char eq 's') {  # RFC 4408, 8.1/19
                     $value = $request->identity;
                 }
@@ -303,12 +303,12 @@ sub expand {
                     throw Mail::SPF::EInvalidMacro(
                         "Unknown macro character '$char' at pos $pos in macro string '$text'");
                 }
-                
+
                 if (defined($rh_parts) or defined($reverse)) {
                     $delimiters ||= $self->default_split_delimiters;
                     my @list = split(/[\Q$delimiters\E]/, $value);
                     @list = reverse(@list) if defined($reverse);
-                    
+
                     # Extract desired parts:
                     if (defined($rh_parts) and $rh_parts > 0) {
                         splice(@list, 0, @list >= $rh_parts ? @list - $rh_parts : 0);
@@ -317,7 +317,7 @@ sub expand {
                         throw Mail::SPF::EInvalidMacro(
                             "Illegal selection of 0 (zero) right-hand parts at pos $pos in macro string '$text'");
                     }
-                    
+
                     $value = join($self->default_join_delimiter, @list);
                 }
 
@@ -325,7 +325,7 @@ sub expand {
                     # Note the comment about the set of safe/unsafe characters at the
                     # definition of the "uri_unreserved_chars" constant above.
                     if $do_percent_encode;
-                
+
                 $expanded .= $value;
             }
             else {
@@ -349,9 +349,9 @@ sub expand {
                 "Invalid macro expression at pos $pos in macro string '$text'");
         }
     }
-    
+
     $expanded .= substr($text, pos($text));  # Append remaining unmatched characters.
-    
+
     #print("DEBUG: Expand $text -> $expanded\n");
     #printf("DEBUG:   Caller: %s() (line %d)\n", (caller(1))[3, 2]);
     return @context ? $expanded : ($self->{expanded} = $expanded);
@@ -411,7 +411,7 @@ method is used to convert the object into a string.
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Server>, L<Mail::SPF::Request>
 
-L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://tools.ietf.org/html/rfc4408>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

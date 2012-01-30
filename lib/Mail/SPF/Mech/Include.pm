@@ -2,9 +2,9 @@
 # Mail::SPF::Mech::Include
 # SPF record "include" mechanism class.
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Include.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
+# $Id: Include.pm 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -147,30 +147,30 @@ See RFC 4408, 5.2, for the exact algorithm used.
 
 sub match {
     my ($self, $server, $request) = @_;
-    
+
     $server->count_dns_interactive_term($request);
-    
+
     # Create sub-request with mutated authority domain:
     my $authority_domain = $self->domain($server, $request);
     my $sub_request = $request->new_sub_request(authority_domain => $authority_domain);
-    
+
     # Process sub-request:
     my $result = $server->process($sub_request);
-    
+
     # Translate result of sub-request (RFC 4408, 5/9):
-    
+
     return TRUE
         if $result->isa('Mail::SPF::Result::Pass');
-    
+
     return FALSE
         if $result->isa('Mail::SPF::Result::Fail')
         or $result->isa('Mail::SPF::Result::SoftFail')
         or $result->isa('Mail::SPF::Result::Neutral');
-    
+
     $server->throw_result('permerror', $request,
         "Included domain '$authority_domain' has no applicable sender policy")
         if $result->isa('Mail::SPF::Result::None');
-    
+
     # Propagate any other results (including {Perm,Temp}Error) as-is:
     $result->throw();
 }
@@ -181,7 +181,7 @@ sub match {
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>, L<Mail::SPF::Mech>
 
-L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://tools.ietf.org/html/rfc4408>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

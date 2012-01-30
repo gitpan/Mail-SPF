@@ -2,8 +2,8 @@
 # Mail::SPF::Result
 # SPF result class.
 #
-# (C) 2005-2009 Julian Mehnle <julian@mehnle.net>
-# $Id: Result.pm 53 2009-10-31 21:40:08Z Julian Mehnle $
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
+# $Id: Result.pm 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -78,7 +78,7 @@ and its derivatives, see below.
     package Mail::SPF::Foo;
     use Error ':try';
     use Mail::SPF::Result;
-    
+
     sub foo {
         if (...) {
             $server->throw_result('pass', $request)
@@ -93,7 +93,7 @@ and its derivatives, see below.
     package Mail::SPF::Bar;
     use Error ':try';
     use Mail::SPF::Foo;
-    
+
     try {
         Mail::SPF::Foo->foo();
     }
@@ -146,14 +146,14 @@ specified.
 
 sub new {
     my ($self, @args) = @_;
-    
+
     local $Error::Depth = $Error::Depth + 1;
-    
+
     $self =
-        ref($self) ?                        # Was new() involed on a class or an object?
+        ref($self) ?                        # Was new() invoked on a class or an object?
             bless({ %$self }, ref($self))   # Object: clone source result object.
         :   $self->SUPER::new();            # Class:  create new result object.
-    
+
     # Set/override fields:
     $self->{server}  = shift(@args) if @args;
     defined($self->{server})
@@ -162,7 +162,7 @@ sub new {
     defined($self->{request})
         or throw Mail::SPF::EOptionRequired('Request object required');
     $self->{'-text'} = shift(@args) if @args;
-    
+
     return $self;
 }
 
@@ -333,7 +333,11 @@ L</OVERLOADING>.
 
 sub stringify {
     my ($self) = @_;
-    return sprintf("%s (%s)", $self->name, $self->SUPER::stringify);
+    return sprintf(
+        "%s (%s)",
+        $self->name,
+        Mail::SPF::Util->sanitize_string($self->SUPER::stringify)
+    );
 }
 
 =item B<local_explanation>: returns I<string>; throws I<Mail::SPF::EDNSError>,
@@ -362,10 +366,10 @@ domain C<other.example.org>, whose sender policy then led to the result.
 sub local_explanation {
     my ($self) = @_;
     my $local_explanation = $self->{local_explanation};
-    
+
     return $local_explanation
         if defined($local_explanation);
-    
+
     # Prepare local explanation:
     my $request = $self->{request};
     $local_explanation = $request->state('local_explanation');
@@ -375,7 +379,7 @@ sub local_explanation {
     else {
         $local_explanation = $self->text;
     }
-    
+
     # Resolve authority domains of root-request and bottom sub-request:
     my $root_request = $request->root_request;
     $local_explanation =
@@ -383,8 +387,8 @@ sub local_explanation {
             sprintf("%s: %s", $request->authority_domain, $local_explanation)
         :   sprintf("%s ... %s: %s",
                 $root_request->authority_domain, $request->authority_domain, $local_explanation);
-    
-    return $self->{local_explanation} = $local_explanation;
+
+    return $self->{local_explanation} = Mail::SPF::Util->sanitize_string($local_explanation);
 }
 
 =item B<received_spf_header>: returns I<string>
@@ -534,15 +538,15 @@ use constant code => 'fail';
 sub authority_explanation {
     my ($self) = @_;
     my $authority_explanation = $self->{authority_explanation};
-    
+
     return $authority_explanation
         if defined($authority_explanation);
-    
+
     my $server  = $self->{server};
     my $request = $self->{request};
-    
+
     my $authority_explanation_macrostring = $request->state('authority_explanation');
-    
+
     # If an explicit explanation was specified by the authority domain...
     if (defined($authority_explanation_macrostring)) {
         try {
@@ -552,14 +556,14 @@ sub authority_explanation {
         catch Mail::SPF::EInvalidMacroString with {};
             # Ignore expansion errors and leave authority explanation undefined.
     }
-    
+
     # If no authority explanation could be determined so far...
     if (not defined($authority_explanation)) {
         # ... then use the server's default authority explanation:
         $authority_explanation =
             $server->default_authority_explanation->new(request => $request)->expand;
     }
-    
+
     return $self->{authority_explanation} = $authority_explanation;
 }
 
@@ -597,7 +601,7 @@ use constant code => 'temperror';
 
 L<Mail::SPF>, L<Mail::SPF::Server>, L<Error>, L<perlfunc/eval>
 
-L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://tools.ietf.org/html/rfc4408>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

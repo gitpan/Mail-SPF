@@ -2,9 +2,9 @@
 # Mail::SPF::Mod::Redirect
 # SPF record "redirect" modifier class.
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Redirect.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
+# $Id: Redirect.pm 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -132,25 +132,25 @@ details.
 
 sub process {
     my ($self, $server, $request, $result) = @_;
-    
+
     $server->count_dns_interactive_term($request);
-    
+
     # Only perform redirection if no mechanism matched (RFC 4408, 6.1/1):
     $result->isa('Mail::SPF::Result::NeutralByDefault')
         or return;
-    
+
     # Create sub-request with mutated authority domain:
     my $authority_domain = $self->{domain_spec}->new(server => $server, request => $request);
     my $sub_request = $request->new_sub_request(authority_domain => $authority_domain);
-    
+
     # Process sub-request:
     $result = $server->process($sub_request);
-    
+
     # Translate result of sub-request (RFC 4408, 6.1/4):
     $server->throw_result('permerror', $request,
         "Redirect domain '$authority_domain' has no applicable sender policy")
         if $result->isa('Mail::SPF::Result::None');
-    
+
     # Propagate any other results as-is:
     $result->throw();
 }
@@ -163,7 +163,7 @@ See L<Mail::SPF::Mod> for other supported instance methods.
 
 L<Mail::SPF>, L<Mail::SPF::Mod>, L<Mail::SPF::Term>, L<Mail::SPF::Record>
 
-L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://tools.ietf.org/html/rfc4408>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

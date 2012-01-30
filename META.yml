@@ -1,30 +1,24 @@
 ---
-name: Mail-SPF
-version: v2.007
+abstract: 'An object-oriented implementation of Sender Policy Framework'
 author:
   - 'Julian Mehnle <julian@mehnle.net>'
   - 'Shevek <cpan@anarres.org>'
-abstract: An object-oriented implementation of Sender Policy Framework
-license: bsd
-resources:
-  license: http://opensource.org/licenses/bsd-license.php
-requires:
-  Error: 0
-  Net::DNS: 0.58
-  NetAddr::IP: 4
-  URI: 1.13
-  perl: v5.6
-  version: 0
 build_requires:
   Module::Build: 0.2805
-  Net::DNS::Resolver::Programmable: v0.002.1
+  Net::DNS::Resolver::Programmable: 0.002001
   Test::More: 0
-recommends:
-  NetAddr::IP: 4.007
+configure_requires:
+  Module::Build: 0.2805
+generated_by: 'Module::Build version 0.3607'
+license: bsd
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: Mail-SPF
 provides:
   Mail::SPF:
     file: lib/Mail/SPF.pm
-    version: v2.007
+    version: v2.8.0
   Mail::SPF::Base:
     file: lib/Mail/SPF/Base.pm
   Mail::SPF::EAbstractClass:
@@ -163,7 +157,15 @@ provides:
     file: lib/Mail/SPF/v1/Record.pm
   Mail::SPF::v2::Record:
     file: lib/Mail/SPF/v2/Record.pm
-generated_by: Module::Build version 0.33
-meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.4.html
-  version: 1.4
+recommends:
+  NetAddr::IP: 4.007
+requires:
+  Error: 0
+  Net::DNS: 0.62
+  NetAddr::IP: 4
+  URI: 1.13
+  perl: 5.006
+  version: 0
+resources:
+  license: http://opensource.org/licenses/bsd-license.php
+version: v2.8.0

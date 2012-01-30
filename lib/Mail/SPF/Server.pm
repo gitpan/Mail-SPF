@@ -2,9 +2,9 @@
 # Mail::SPF::Server
 # Server class for processing SPF requests.
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Server.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
+# $Id: Server.pm 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -43,7 +43,7 @@ use constant query_rr_type_spf                      => 1;
 use constant query_rr_type_txt                      => 2;
 
 use constant default_default_authority_explanation  =>
-    'Please see http://www.openspf.org/Why?s=%{_scope};id=%{S};ip=%{C};r=%{R}';
+    'Please see http://www.openspf.net/Why?s=%{_scope};id=%{S};ip=%{C};r=%{R}';
 
 sub default_query_rr_types { shift->query_rr_type_all };
 
@@ -60,13 +60,13 @@ use constant default_max_void_dns_lookups           => 2;
 =head1 SYNOPSIS
 
     use Mail::SPF;
-    
+
     my $spf_server  = Mail::SPF::Server->new(
         # Optional custom default for authority explanation:
         default_authority_explanation =>
             'See http://www.%{d}/why/id=%{S};ip=%{I};r=%{R}'
     );
-    
+
     my $result      = $spf_server->process($request);
 
 =cut
@@ -102,7 +102,7 @@ A I<string> denoting the default (not macro-expanded) authority explanation
 string to use if the authority domain does not specify an explanation string of
 its own.  Defaults to:
 
-    'Please see http://www.openspf.org/Why?s=%{_scope};id=%{S};ip=%{C};r=%{R}'
+    'Please see http://www.openspf.net/Why?s=%{_scope};id=%{S};ip=%{C};r=%{R}'
 
 As can be seen from the default, a non-standard C<_scope> pseudo macro is
 supported that expands to the name of the identity's scope.  (Note: Do I<not>
@@ -209,7 +209,7 @@ would normally be returned.
 sub new {
     my ($self, %options) = @_;
     $self = $self->SUPER::new(%options);
-    
+
     $self->{default_authority_explanation} = $self->default_default_authority_explanation
         if not defined($self->{default_authority_explanation});
     $self->{default_authority_explanation} = Mail::SPF::MacroString->new(
@@ -218,14 +218,14 @@ sub new {
         is_explanation  => TRUE
     )
         if not UNIVERSAL::isa($self->{default_authority_explanation}, 'Mail::SPF::MacroString');
-    
+
     $self->{hostname} ||= Mail::SPF::Util->hostname;
-    
+
     $self->{dns_resolver} ||= Net::DNS::Resolver->new();
-    
+
     $self->{query_rr_types} = $self->default_query_rr_types
         if not defined($self->{query_rr_types});
-    
+
     $self->{max_dns_interactive_terms}      = $self->default_max_dns_interactive_terms
                                        if not exists($self->{max_dns_interactive_terms});
     $self->{max_name_lookups_per_term}      = $self->default_max_name_lookups_per_term
@@ -234,10 +234,10 @@ sub new {
                                        if not exists($self->{max_name_lookups_per_mx_mech});
     $self->{max_name_lookups_per_ptr_mech}  = $self->default_max_name_lookups_per_ptr_mech
                                        if not exists($self->{max_name_lookups_per_ptr_mech});
-    
+
     $self->{max_void_dns_lookups}           = $self->default_max_void_dns_lookups
                                        if not exists($self->{max_void_dns_lookups});
-    
+
     return $self;
 }
 
@@ -313,11 +313,11 @@ details.
 
 sub process {
     my ($self, $request) = @_;
-    
+
     $request->state('authority_explanation', undef);
     $request->state('dns_interactive_terms_count', 0);
     $request->state('void_dns_lookups_count', 0);
-    
+
     my $result;
     try {
         my $record = $self->select_record($request);
@@ -344,7 +344,7 @@ sub process {
     };
     # Propagate other, unknown errors.
     # This should not happen, but if it does, it helps exposing the bug!
-    
+
     return $result;
 }
 
@@ -401,20 +401,20 @@ also be thrown.
 
 sub select_record {
     my ($self, $request) = @_;
-    
+
     my $domain   = $request->authority_domain;
     my @versions = $request->versions;
     my $scope    = $request->scope;
-    
+
     # Employ identical behavior for 'v=spf1' and 'spf2.0' records, both of
     # which support SPF (code 99) and TXT type records (this may be different
     # in future revisions of SPF):
     # Query for SPF type records first, then fall back to TXT type records.
-    
+
     my @records;
     my $query_count = 0;
     my @dns_errors;
-    
+
     # Query for SPF-type RRs first:
     if (
         $self->query_rr_types == $self->query_rr_type_all or
@@ -437,7 +437,7 @@ sub select_record {
         #    # Apparrently some brain-dead DNS servers time out on SPF-type queries.
         #};
     }
-    
+
     # If no usable SPF-type RRs, try TXT-type RRs:
     if (
         not @records and
@@ -455,7 +455,7 @@ sub select_record {
         #   Implication:  Sender ID processing may make use of existing TXT-
         #   type records where a result of "None" would normally be returned
         #   under a strict interpretation of RFC 4406.
-        
+
         try {
             $query_count++;
             my $packet = $self->dns_lookup($domain, 'TXT');
@@ -469,24 +469,24 @@ sub select_record {
             push(@dns_errors, shift);
         };
     }
-    
+
     @dns_errors < $query_count
         or $dns_errors[0]->throw;
         # Unless at least one query succeeded, re-throw the first DNS error that occurred.
-    
+
     @records
         or throw Mail::SPF::ENoAcceptableRecord(
             "No applicable sender policy available");  # RFC 4408, 4.5/7
-    
+
     # Discard all records but the highest acceptable version:
     my $preferred_record_class = $records[0]->class;
     @records = grep($_->isa($preferred_record_class), @records);
-    
+
     @records == 1
         or throw Mail::SPF::ERedundantAcceptableRecords(
             "Redundant applicable '" . $preferred_record_class->version_tag . "' " .
             "sender policies found");  # RFC 4408, 4.5/6
-    
+
     return $records[0];
 }
 
@@ -502,18 +502,18 @@ do not cover the given scope.  Returns a list of acceptable records.
 
 sub get_acceptable_records_from_packet {
     my ($self, $packet, $rr_type, $versions, $scope, $domain) = @_;
-    
+
     my @versions = sort { $b <=> $a } @$versions;
         # Try higher record versions first.
         # (This may be too simplistic for future revisions of SPF.)
-    
+
     my @records;
     foreach my $rr ($packet->answer) {
         next if $rr->type ne $rr_type;  # Ignore RRs of unexpected type.
-        
+
         my $text = join('', $rr->char_str_list);
         my $record;
-        
+
         # Try to parse RR as each of the requested record versions,
         # starting from the highest version:
         VERSION:
@@ -528,7 +528,7 @@ sub get_acceptable_records_from_packet {
                 # Propagate other errors (including syntax errors), though.
             last VERSION if defined($record);
         }
-        
+
         push(@records, $record)
             if  defined($record)
             and grep($scope eq $_, $record->scopes);  # record covers requested scope?
@@ -549,7 +549,7 @@ error (other than RCODE 3 AKA C<NXDOMAIN>) occurred.
 
 sub dns_lookup {
     my ($self, $domain, $rr_type) = @_;
-    
+
     if (UNIVERSAL::isa($domain, 'Mail::SPF::MacroString')) {
         $domain = $domain->expand;
         # Truncate overlong labels at 63 bytes (RFC 4408, 8.1/27):
@@ -558,11 +558,11 @@ sub dns_lookup {
         $domain =~ s/^[^.]+\.(.*)$/$1/
             while length($domain) > 253;
     }
-    
+
     $domain =~ s/^(.*?)\.?$/\L$1/;  # Normalize domain.
-    
+
     my $packet = $self->dns_resolver->send($domain, $rr_type);
-    
+
     # Throw DNS exception unless an answer packet with RCODE 0 or 3 (NXDOMAIN)
     # was received (thereby treating NXDOMAIN as an acceptable but empty answer packet):
     $self->dns_resolver->errorstring !~ /^(timeout|query timed out)$/
@@ -574,7 +574,7 @@ sub dns_lookup {
     $packet->header->rcode =~ /^(NOERROR|NXDOMAIN)$/
         or throw Mail::SPF::EDNSError(
             "'" . $packet->header->rcode . "' error on DNS '$rr_type' lookup of '$domain'");
-    
+
     return $packet;
 }
 
@@ -679,15 +679,15 @@ __PACKAGE__->make_accessor($_, TRUE)
     foreach qw(
         default_authority_explanation
         hostname
-        
+
         dns_resolver
         query_rr_types
-        
+
         max_dns_interactive_terms
         max_name_lookups_per_term
         max_name_lookups_per_mx_mech
         max_name_lookups_per_ptr_mech
-        
+
         max_void_dns_lookups
     );
 
@@ -697,7 +697,7 @@ __PACKAGE__->make_accessor($_, TRUE)
 
 L<Mail::SPF>, L<Mail::SPF::Request>, L<Mail::SPF::Result>
 
-L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://tools.ietf.org/html/rfc4408>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

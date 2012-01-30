@@ -2,9 +2,9 @@
 # Mail::SPF::Mech::Exists
 # SPF record "exists" mechanism class.
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Exists.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
+# $Id: Exists.pm 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -135,14 +135,14 @@ details.
 
 sub match {
     my ($self, $server, $request) = @_;
-    
+
     $server->count_dns_interactive_term($request);
-    
+
     my $domain = $self->domain($server, $request);
     my $packet = $server->dns_lookup($domain, 'A');
     my @rrs    = $packet->answer
         or $server->count_void_dns_lookup($request);
-    
+
     foreach my $rr (@rrs) {
         return TRUE
             if $rr->type eq 'A';
@@ -156,7 +156,7 @@ sub match {
 
 L<Mail::SPF>, L<Mail::SPF::Record>, L<Mail::SPF::Term>, L<Mail::SPF::Mech>
 
-L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://tools.ietf.org/html/rfc4408>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.

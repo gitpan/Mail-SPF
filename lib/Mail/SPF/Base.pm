@@ -2,9 +2,9 @@
 # Mail::SPF::Base
 # Base class for Mail::SPF classes.
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Base.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
+# $Id: Base.pm 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -29,7 +29,7 @@ use constant FALSE  => not TRUE;
 =head1 SYNOPSIS
 
     use base 'Mail::SPF::Base';
-    
+
     sub new {
         my ($class, @options) = @_;
         my $self = $class->SUPER::new(@options);

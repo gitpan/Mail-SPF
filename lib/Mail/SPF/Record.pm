@@ -2,9 +2,9 @@
 # Mail::SPF::Record
 # Abstract base class for SPF records.
 #
-# (C) 2005-2008 Julian Mehnle <julian@mehnle.net>
+# (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Record.pm 50 2008-08-17 21:28:15Z Julian Mehnle $
+# $Id: Record.pm 57 2012-01-30 08:15:31Z julian $
 #
 ##############################################################################
 
@@ -50,13 +50,13 @@ use constant results_by_qualifier   => {
 =head2 Creating a record from a string
 
     use Mail::SPF::v1::Record;
-    
+
     my $record = Mail::SPF::v1::Record->new_from_string("v=spf1 a mx -all");
 
 =head2 Creating a record synthetically
 
     use Mail::SPF::v2::Record;
-    
+
     my $record = Mail::SPF::v2::Record->new(
         scopes      => ['mfrom', 'pra'],
         terms       => [
@@ -373,12 +373,12 @@ RFC 4408, 4.6 and 4.7, for the exact algorithm used.
 
 sub eval {
     my ($self, $server, $request) = @_;
-    
+
     defined($server)
         or throw Mail::SPF::EOptionRequired('Mail::SPF server object required for record evaluation');
     defined($request)
         or throw Mail::SPF::EOptionRequired('Request object required for record evaluation');
-    
+
     try {
         foreach my $term ($self->terms) {
             if ($term->isa('Mail::SPF::Mech')) {
@@ -406,19 +406,19 @@ sub eval {
                     "Unexpected term object '$term' encountered");
             }
         }
-        
+
         # Default result when "falling off" the end of the record (RFC 4408, 4.7/1):
         $server->throw_result('neutral-by-default', $request,
             'Default neutral result due to no mechanism matches');
     }
     catch Mail::SPF::Result with {
         my ($result) = @_;
-        
+
         # Process global modifiers in ascending order of precedence:
         foreach my $global_mod ($self->global_mods) {
             $global_mod->process($server, $request, $result);
         }
-        
+
         $result->throw();
     };
 }
@@ -435,7 +435,7 @@ is used to convert the object into a string.
 L<Mail::SPF>, L<Mail::SPF::v1::Record>, L<Mail::SPF::v2::Record>,
 L<Mail::SPF::Term>, L<Mail::SPF::Mech>, L<Mail::SPF::Mod>
 
-L<http://www.ietf.org/rfc/rfc4408.txt>
+L<http://tools.ietf.org/html/rfc4408>
 
 For availability, support, and license information, see the README file
 included with Mail::SPF.
