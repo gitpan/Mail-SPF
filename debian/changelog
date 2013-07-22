@@ -1,3 +1,12 @@
+mail-spf-perl (2.009) unstable; urgency=low
+
+  Mail::SPF:
+  * Default to querying only TXT type RRs (query_rr_types = Mail::SPF::Server->
+    query_rr_type_txt).  Experience has shown that querying SPF type RRs is
+    impractical.
+
+ -- Julian Mehnle <julian@mehnle.net>  Mon, 22 Jul 2013 03:33:14 +0000
+
 mail-spf-perl (2.008) unstable; urgency=low
 
   Debian:

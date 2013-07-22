@@ -5,7 +5,7 @@ author:
   - 'Shevek <cpan@anarres.org>'
 build_requires:
   Module::Build: 0.2805
-  Net::DNS::Resolver::Programmable: 0.002001
+  Net::DNS::Resolver::Programmable: 0.003
   Test::More: 0
 configure_requires:
   Module::Build: 0.2805
@@ -18,7 +18,7 @@ name: Mail-SPF
 provides:
   Mail::SPF:
     file: lib/Mail/SPF.pm
-    version: v2.8.0
+    version: v2.9.0
   Mail::SPF::Base:
     file: lib/Mail/SPF/Base.pm
   Mail::SPF::EAbstractClass:
@@ -168,4 +168,4 @@ requires:
   version: 0
 resources:
   license: http://opensource.org/licenses/bsd-license.php
-version: v2.8.0
+version: v2.9.0

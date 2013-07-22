@@ -2,7 +2,7 @@
 # Module::Build build script for Mail::SPF
 #
 # (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
-# $Id: Build.PL 57 2012-01-30 08:15:31Z julian $
+# $Id: Build.PL 61 2013-07-22 03:45:15Z julian $
 #
 ##############################################################################
 
@@ -67,7 +67,7 @@ my $build = $class->new(
         Module::Build       => '0.2805',
         Test::More          => 0,
         Net::DNS::Resolver::Programmable
-                            => '0.002001',
+                            => '0.003',
     },
     script_files        => [
         'bin/spfquery'

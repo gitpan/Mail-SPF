@@ -4,7 +4,7 @@
 #
 # (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: Server.pm 57 2012-01-30 08:15:31Z julian $
+# $Id: Server.pm 61 2013-07-22 03:45:15Z julian $
 #
 ##############################################################################
 
@@ -39,13 +39,13 @@ use constant record_classes_by_version => {
 use constant result_base_class => 'Mail::SPF::Result';
 
 use constant query_rr_type_all                      => 0;
-use constant query_rr_type_spf                      => 1;
-use constant query_rr_type_txt                      => 2;
+use constant query_rr_type_txt                      => 1;
+use constant query_rr_type_spf                      => 2;
 
 use constant default_default_authority_explanation  =>
-    'Please see http://www.openspf.net/Why?s=%{_scope};id=%{S};ip=%{C};r=%{R}';
+    'Please see http://www.openspf.org/Why?s=%{_scope};id=%{S};ip=%{C};r=%{R}';
 
-sub default_query_rr_types { shift->query_rr_type_all };
+sub default_query_rr_types { shift->query_rr_type_txt };
 
 use constant default_max_dns_interactive_terms      => 10;  # RFC 4408, 10.1/6
 use constant default_max_name_lookups_per_term      => 10;  # RFC 4408, 10.1/7
@@ -102,7 +102,7 @@ A I<string> denoting the default (not macro-expanded) authority explanation
 string to use if the authority domain does not specify an explanation string of
 its own.  Defaults to:
 
-    'Please see http://www.openspf.net/Why?s=%{_scope};id=%{S};ip=%{C};r=%{R}'
+    'Please see http://www.openspf.org/Why?s=%{_scope};id=%{S};ip=%{C};r=%{R}'
 
 As can be seen from the default, a non-standard C<_scope> pseudo macro is
 supported that expands to the name of the identity's scope.  (Note: Do I<not>
@@ -130,26 +130,27 @@ following values are supported:
 
 =over
 
-=item B<< Mail::SPF::Server->query_rr_type_all >> (default)
+=item B<< Mail::SPF::Server->query_rr_type_all >>
 
-Both C<SPF> and C<TXT> type RRs.
+Both C<TXT> and C<SPF> type RRs.
+
+=item B<< Mail::SPF::Server->query_rr_type_txt >> (default)
+
+C<TXT> type RRs only.
 
 =item B<< Mail::SPF::Server->query_rr_type_spf >>
 
 C<SPF> type RRs only.
 
-=item B<< Mail::SPF::Server->query_rr_type_txt >>
-
-C<TXT> type RRs only.
-
 =back
 
-Some (few) name servers suffer from serious brain damage with regard to the
-handling of queries for RR types that are unknown to them, such as the C<SPF>
-RR type, so some (few) B<Mail::SPF> users have expressed the desire for a way
-to disable the retrieval of C<SPF> type RRs.  It is, however, a better idea to
-pressure the manufacturers of such broken name servers into fixing their
-products.
+For years B<Mail::SPF> has defaulted to looking up both C<SPF> and C<TXT> type
+RRs as recommended by RFC 4408.  Experience has shown, however, that a
+significant portion of name servers suffer from serious brain damage with
+regard to the handling of queries for RR types that are unknown to them, such
+as the C<SPF> RR type.  Consequently B<Mail::SPF> now defaults to looking up
+only C<TXT> type RRs.  This may be overridden by setting the B<query_rr_types>
+option.
 
 See RFC 4408, 3.1.1, for a discussion of the topic, as well as the description
 of the L</select_record> method.
@@ -358,7 +359,8 @@ sender policy records and, if multiple records are available, selects the
 record of the highest acceptable record version that covers the requested
 scope.
 
-More precisely, the following algorithm is performed:
+More precisely, the following algorithm is performed (assuming that both C<TXT>
+and C<SPF> RR types are being queried):
 
 =over
 

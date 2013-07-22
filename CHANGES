@@ -4,6 +4,13 @@
 #   ! = Changed something significant, or removed a feature
 #   * = Fixed a bug, or made a minor improvement
 
+--- 2.009 (2013-07-21 03:30)
+
+  Mail::SPF:
+  * Default to querying only TXT type RRs (query_rr_types = Mail::SPF::Server->
+    query_rr_type_txt).  Experience has shown that querying SPF type RRs is
+    impractical.
+
 --- 2.008 (2012-01-30 08:15)
 
   Mail::SPF:
@@ -201,5 +208,5 @@
 
 --- 2.000 (initial release) (2005-06-23 00:00)
 
-# $Id: CHANGES 59 2012-01-30 08:57:32Z julian $
+# $Id: CHANGES 61 2013-07-22 03:45:15Z julian $
 # vim:syn= tw=79 sts=2 sw=2

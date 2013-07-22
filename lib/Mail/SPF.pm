@@ -5,7 +5,7 @@
 #
 # (C) 2005-2012 Julian Mehnle <julian@mehnle.net>
 #     2005      Shevek <cpan@anarres.org>
-# $Id: SPF.pm 57 2012-01-30 08:15:31Z julian $
+# $Id: SPF.pm 63 2013-07-22 03:52:21Z julian $
 #
 ##############################################################################
 
@@ -17,11 +17,11 @@ Mail::SPF - An object-oriented implementation of Sender Policy Framework
 
 =head1 VERSION
 
-2.008
+2.009
 
 =cut
 
-use version; our $VERSION = qv('2.008');
+use version; our $VERSION = qv('2.009');
 
 use warnings;
 use strict;
@@ -59,7 +59,7 @@ use constant FALSE  => not TRUE;
 =head1 DESCRIPTION
 
 B<Mail::SPF> is an object-oriented implementation of Sender Policy Framework
-(SPF).  See L<http://www.openspf.net> for more information about SPF.
+(SPF).  See L<http://www.openspf.org> for more information about SPF.
 
 This class collection aims to fully conform to the SPF specification (RFC
 4408) so as to serve both as a production quality SPF implementation and as a
@@ -78,11 +78,11 @@ included with Mail::SPF.
 
 =item The SPF project
 
-L<http://www.openspf.net>
+L<http://www.openspf.org>
 
 =item The SPFv1 specification (RFC 4408)
 
-L<http://www.openspf.net/Specifications>, L<http://tools.ietf.org/html/rfc4408>
+L<http://www.openspf.org/Specifications>, L<http://tools.ietf.org/html/rfc4408>
 
 =back
 
